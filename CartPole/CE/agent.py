@@ -171,7 +171,7 @@ if __name__ == "__main__":
 
     env = gym.make("CartPole-v1")
     agent = Agent(env, p=PERCENTILE, lr=LEARNING_RATE)
-    total_rewards = agent.train(num_epochs=100, num_episodes=100)
+    total_rewards = agent.train(num_epochs=10, num_episodes=100)
     agent.plot_rewards(total_rewards)
     
     input("PLAY?")
