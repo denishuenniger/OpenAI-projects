@@ -13,7 +13,7 @@ class Agent:
         self.env = env
         self.num_states = self.env.observation_space.shape[0]
         self.num_actions = self.env.action_space.n
-        self.q = defaultdict(lambda : [0.0 for _ in range(self.num_actions)])
+        self.q = defaultdict(lambda : [np.random.random() for _ in range(self.num_actions)])
         self.gamma = gamma
         self.alpha = alpha
         self.epsilon = epsilon
@@ -38,14 +38,11 @@ class Agent:
 
 
     def get_value(self, state):
-        value = np.max(self.q[state])
-
-        return value
+        return np.max(self.q[state])
 
 
     def get_random_action(self):
-        action = self.env.action_space.sample()
-        return action
+        return self.env.action_space.sample()
 
 
     def update_q_values(self, state, action, reward, next_state):
@@ -90,7 +87,7 @@ class Agent:
             total_reward = 0.0
 
             while True:
-                if np.random.random() <= self.epsilon:
+                if np.random.random() < self.epsilon:
                     action = self.get_random_action()
                     self.reduce_epsilon()
                 else:
@@ -105,7 +102,7 @@ class Agent:
                 state = next_state
 
                 if done:
-                    total_reward += 100
+                    total_reward += 100.0
                     total_rewards.append(total_reward)
                     mean_total_rewards = np.mean(total_rewards[-10:])
 
@@ -151,13 +148,13 @@ if __name__ == "__main__":
 
     # Hyperparameters
     GAMMA = 0.9
-    ALPHA = 0.8
-    EPSILON = 0.9
-    EPSILON_MIN = 0.1
-    EPSILON_DECAY = 0.95
+    ALPHA = 0.2
+    EPSILON = 0.1
+    EPSILON_MIN = 0.01
+    EPSILON_DECAY = 0.99
 
     PLAY = False
-    EPISODES_TRAIN = 100000
+    EPISODES_TRAIN = 1000000
     EPISODES_PLAY = 5
     
     env = gym.make("CartPole-v1")
