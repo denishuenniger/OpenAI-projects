@@ -53,7 +53,7 @@ class Agent:
             self.model.load_actor(self.path_actor)
             self.model.load_critic(self.path_critic)
         except:
-            print(f"Files do not exist! Create new files...")
+            print(f"Model does not exist! Create new model...")
 
         total_rewards = []
 
@@ -82,6 +82,9 @@ class Agent:
                     print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
                     
                     if mean_total_rewards >= 495.0:
+                        self.model.save_actor(self.path_actor)
+                        self.model.save_critic(self.path_critic)
+
                         return total_rewards
                     else:
                         break
@@ -106,7 +109,9 @@ class Agent:
                 state, reward, done, _ = self.env.step(action)
                 state = state.reshape(1, self.num_states)
 
-                if done: break
+                if done:
+                    print(f"Episode: {episode + 1} \t Reward: {reward}")
+                    break
 
 
     def plot_rewards(self, total_rewards):
