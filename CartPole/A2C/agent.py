@@ -129,13 +129,15 @@ if __name__ == "__main__":
     LR_ACTOR = 1e-3
     LR_CRITIC = 5e-3
 
+    PLAY = True
     EPISODES_TRAIN = 10000
     EPISODES_TEST = 10
 
     env = gym.make("CartPole-v1")
     agent = Agent(env, gamma = GAMMA, lr_actor=LR_ACTOR, lr_critic=LR_CRITIC)
-    total_rewards = agent.train(num_episodes=EPISODES_TRAIN)
-    agent.plot_rewards(total_rewards)
-
-    input("PLAY?")
-    agent.test(num_episodes=EPISODES_TEST, render=True)
+    
+    if not PLAY:
+        total_rewards = agent.train(num_episodes=EPISODES_TRAIN)
+        agent.plot_rewards(total_rewards)
+    else:
+        agent.test(num_episodes=EPISODES_TEST, render=True)
