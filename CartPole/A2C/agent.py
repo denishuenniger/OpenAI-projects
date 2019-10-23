@@ -95,7 +95,7 @@ class Agent:
         return total_rewards
 
 
-    def test(self, num_episodes, render):
+    def play(self, num_episodes):
         self.model.load_actor(self.path_actor)
         
         for episode in range(num_episodes):
@@ -103,8 +103,7 @@ class Agent:
             state = state.reshape(1, self.num_states)
 
             while True:
-                if render: self.env.render()
-                
+                self.env.redner()
                 action = self.get_action(state)
                 state, reward, done, _ = self.env.step(action)
                 state = state.reshape(1, self.num_states)
@@ -125,13 +124,13 @@ class Agent:
 if __name__ == "__main__":
 
     # Hyperparameters
-    GAMMA = 0.99
+    GAMMA = 0.98
     LR_ACTOR = 1e-3
     LR_CRITIC = 5e-3
 
-    PLAY = True
+    PLAY = False
     EPISODES_TRAIN = 10000
-    EPISODES_TEST = 10
+    EPISODES_PLAY = 5
 
     env = gym.make("CartPole-v1")
     agent = Agent(env, gamma = GAMMA, lr_actor=LR_ACTOR, lr_critic=LR_CRITIC)
@@ -140,4 +139,4 @@ if __name__ == "__main__":
         total_rewards = agent.train(num_episodes=EPISODES_TRAIN)
         agent.plot_rewards(total_rewards)
     else:
-        agent.test(num_episodes=EPISODES_TEST, render=True)
+        agent.play(num_episodes=EPISODES_PLAY)

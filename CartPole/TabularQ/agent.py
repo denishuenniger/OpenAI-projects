@@ -147,14 +147,14 @@ class Agent:
 if __name__ == "__main__":
 
     # Hyperparameters
-    GAMMA = 0.9
+    GAMMA = 0.98
     ALPHA = 0.2
     EPSILON = 0.1
     EPSILON_MIN = 0.01
     EPSILON_DECAY = 0.99
 
     PLAY = False
-    EPISODES_TRAIN = 1000000
+    EPISODES_TRAIN = 100000
     EPISODES_PLAY = 5
     
     env = gym.make("CartPole-v1")

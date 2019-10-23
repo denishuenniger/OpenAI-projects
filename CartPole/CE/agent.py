@@ -69,9 +69,13 @@ class Agent:
                 next_state, reward, done, _ = self.env.step(action)
                 episodes[episode].append((state, action))
                 state = next_state
+                
+                if done and reward != 500.0: reward = -100.0 
+                
                 total_reward += reward
 
                 if done:
+                    total_reward += 100.0
                     rewards[episode] = total_reward
                     break
 
@@ -133,11 +137,10 @@ class Agent:
         return total_rewards
 
    
-    def test(self, num_episodes, render):
+    def play(self, num_episodes):
         """
         Tests the trained agent for a given number of episodes.
             num_episodes    = Number of episodes to test
-            render          = Flag whether training is displayed or not
         """
 
         self.model.load(self.path_model)
@@ -147,9 +150,7 @@ class Agent:
             total_reward = 0.0
 
             while True:
-                if render:
-                    self.env.render()
-
+                self.env.render()
                 action = self.get_action(state)
                 state, reward, done, _ = self.env.step(action)
                 total_reward += reward
@@ -173,10 +174,10 @@ if __name__ == "__main__":
     PERCENTILE = 0.75
     LEARNING_RATE = 1e-3
 
-    PLAY = False
+    PLAY = True
     EPOCHS_TRAIN = 100
     EPISODES_TRAIN = 100
-    EPISODES_TEST = 10
+    EPISODES_PLAY = 5
 
     env = gym.make("CartPole-v1")
     agent = Agent(env, p=PERCENTILE, lr=LEARNING_RATE)
@@ -185,4 +186,4 @@ if __name__ == "__main__":
         total_rewards = agent.train(num_epochs=EPOCHS_TRAIN, num_episodes=EPISODES_TRAIN)
         agent.plot_rewards(total_rewards)
     else:
-        agent.test(num_episodes=EPISODES_TEST, render=True)
+        agent.play(num_episodes=EPISODES_PLAY)
