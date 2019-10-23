@@ -38,7 +38,7 @@ class Agent:
         self.path_plot = os.path.join(directory, "plots/dnn.png")
 
     
-    def predict_action(self, state):
+    def get_action(self, state):
         """
         Predicts an action from the current policy.
             state = Current state of the agent
@@ -65,7 +65,7 @@ class Agent:
             total_reward = 0.0
 
             while True:
-                action = self.predict_action(state)
+                action = self.get_action(state)
                 next_state, reward, done, _ = self.env.step(action)
                 episodes[episode].append((state, action))
                 state = next_state
@@ -111,7 +111,7 @@ class Agent:
         try:
             self.model.load(self.path_model)
         except:
-            print(f"File does not exist! Create new file...")
+            print(f"Model does not exist! Create new model...")
 
         total_rewards = []
 
@@ -120,9 +120,10 @@ class Agent:
             x_train, y_train, reward_bound = self.get_training_data(episodes, rewards)
             mean_reward = np.mean(rewards)
             total_rewards.extend(rewards)
-
-            mena_total_rewards = np.mena_total_rewards[:-10]
-            if mena_total_rewards >= 495.0: return total_rewards
+            
+            if mean_reward >= 495.0:
+                self.model.save(self.path_model)
+                return total_rewards
             
             self.model.fit(x_train, y_train)
             print(f"Epoch: {epoch + 1}/{num_epochs} \tMean Reward: {mean_reward} \tReward Bound: {reward_bound}")
@@ -149,7 +150,7 @@ class Agent:
                 if render:
                     self.env.render()
 
-                action = self.predict_action(state)
+                action = self.get_action(state)
                 state, reward, done, _ = self.env.step(action)
                 total_reward += reward
 
@@ -172,10 +173,14 @@ if __name__ == "__main__":
     PERCENTILE = 0.75
     LEARNING_RATE = 1e-3
 
+    EPOCHS_TRAIN = 100
+    EPISODES_TRAIN = 100
+    EPISODES_TEST = 10
+
     env = gym.make("CartPole-v1")
     agent = Agent(env, p=PERCENTILE, lr=LEARNING_RATE)
-    total_rewards = agent.train(num_epochs=100, num_episodes=100)
-    agent.plot_rewards(total_rewards)
+    #total_rewards = agent.train(num_epochs=EPOCHS_TRAIN, num_episodes=EPISODES_TRAIN)
+    #agent.plot_rewards(total_rewards)
     
     input("PLAY?")
     agent.test(num_episodes=10, render=True)
