@@ -13,12 +13,7 @@ class DNN(Model):
         self.lr = lr
 
         state = Input(shape=(self.num_states,))
-        x = Dense(64, activation="relu")(state)
-        x = Dense(64, activation="relu")(x)
-        x = Dense(32, activation="relu")(x)
-        x = Dense(32, activation="relu")(x)
-        x = Dense(16, activation="relu")(x)
-        x = Dense(16, activation="relu")(x)
+        x = Dense(24, activation="relu")(state)
         action = Dense(self.num_actions, activation="softmax")(x)
 
         self.model = Model(inputs=state, outputs=action)

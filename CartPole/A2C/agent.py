@@ -1,5 +1,7 @@
 import gym
+import os
 import numpy as np
+import matplotlib.pyplot as plt
 from model import DNN
 
 
@@ -13,9 +15,12 @@ class Agent:
         self.lr_actor = lr_actor
         self.lr_critic = lr_critic
         self.model = DNN(self.num_states, self.num_actions, self.lr_actor, self.lr_critic)
-        self.path_actor = "./models/actor.h5"
-        self.path_critic = "./models/critic.h5"
-        self.path_plots = "./plots/a2c.png"
+
+        # File paths
+        directory = os.path.dirname(__file__)
+        self.path_actor = os.path.join(directory, "models/actor.h5")
+        self.path_critic = os.path.join(directory, "models/critic.h5")
+        self.path_plot = os.path.join(directory, "plots/dnn.png")
 
 
     def get_action(self, state):
@@ -61,17 +66,25 @@ class Agent:
                 action = self.get_action(state)
                 next_state, reward, done, _ = self.env.step(action)
                 next_state = next_state.reshape(1, self.num_states)
+
+                if done and reward != 500.0: reward = -100.0
+
                 self.update_policy(state, action, reward, next_state, done)
                 total_reward += reward
                 state = next_state
 
                 if done:
+                    total_reward += 100.0
                     total_rewards.append(total_reward)
                     idx = -min(len(total_rewards), 10)
                     mean_total_rewards = np.mean(total_rewards[idx:])
                     
-                    print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Reward: {mean_total_rewards}")
-                    break
+                    print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
+                    
+                    if mean_total_rewards >= 495.0:
+                        return total_rewards
+                    else:
+                        break
 
         self.model.save_actor(self.path_actor)
         self.model.save_critic(self.path_critic)
@@ -81,23 +94,27 @@ class Agent:
 
     def test(self, num_episodes, render):
         self.model.load_actor(self.path_actor)
-        self.model.load_critic(self.path_critic)
         
         for episode in range(num_episodes):
             state = self.env.reset()
+            state = state.reshape(1, self.num_states)
 
             while True:
                 if render: self.env.render()
                 
                 action = self.get_action(state)
                 state, reward, done, _ = self.env.step(action)
+                state = state.reshape(1, self.num_states)
 
                 if done: break
 
 
     def plot_rewards(self, total_rewards):
-        plt.plot(range(len(total_rewards)), total_rewards)
-        plt.savefig(self.path_plots)
+        plt.plot(range(len(total_rewards)), total_rewards, linewidth=0.8)
+        plt.xlabel("Episode")
+        plt.ylabel("Reward")
+        plt.title("Total Rewards")
+        plt.savefig(self.path_plot)
 
 
 if __name__ == "__main__":
@@ -107,10 +124,13 @@ if __name__ == "__main__":
     LR_ACTOR = 1e-3
     LR_CRITIC = 5e-3
 
+    EPISODES_TRAIN = 10000
+    EPISODES_TEST = 10
+
     env = gym.make("CartPole-v1")
     agent = Agent(env, gamma = GAMMA, lr_actor=LR_ACTOR, lr_critic=LR_CRITIC)
-    total_rewards = agent.train(num_episodes=10000)
+    total_rewards = agent.train(num_episodes=EPISODES_TRAIN)
     agent.plot_rewards(total_rewards)
 
     input("PLAY?")
-    agent.play(num_episodes=10, render=True)
+    agent.test(num_episodes=EPISODES_TEST, render=True)

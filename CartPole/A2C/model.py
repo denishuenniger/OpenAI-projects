@@ -13,32 +13,45 @@ class DNN(Model):
         self.lr_actor = lr_actor
         self.lr_critic = lr_critic
 
-        state = Input(shape=(self.num_states,))
-        x = Dense(128, activation="relu")(state)
-        x = Dense(128, activation="relu")(x)
-        x = Dense(64, activation="relu")(x)
-        x = Dense(64, activation="relu")(x)
+        # state = Input(shape=(self.num_states,))
+        # x = Dense(128, activation="relu")(state)
+        # x = Dense(128, activation="relu")(x)
+        # x = Dense(64, activation="relu")(x)
+        # x = Dense(64, activation="relu")(x)
 
-        actor_x = Dense(32, activation="relu")(x)
-        actor_x = Dense(32, activation="relu")(actor_x)
-        actor_x = Dense(16, activation="relu")(actor_x)
-        actor_x = Dense(16, activation="relu")(actor_x)
-        actor_out = Dense(self.num_actions, activation="softmax")(actor_x)
+        # actor_x = Dense(32, activation="relu")(x)
+        # actor_x = Dense(32, activation="relu")(actor_x)
+        # actor_x = Dense(16, activation="relu")(actor_x)
+        # actor_x = Dense(16, activation="relu")(actor_x)
+        # actor_out = Dense(self.num_actions, activation="softmax")(actor_x)
 
-        critic_x = Dense(32, activation="relu")(x)
-        critic_x = Dense(32, activation="relu")(critic_x)
-        critic_x = Dense(16, activation="relu")(critic_x)
-        critic_x = Dense(16, activation="relu")(critic_x)
-        critic_out = Dense(1)(critic_x)
+        # critic_x = Dense(32, activation="relu")(x)
+        # critic_x = Dense(32, activation="relu")(critic_x)
+        # critic_x = Dense(16, activation="relu")(critic_x)
+        # critic_x = Dense(16, activation="relu")(critic_x)
+        # critic_out = Dense(1)(critic_x)
 
+        # self.actor = Model(inputs=state, outputs=actor_out)
+        # self.actor.summary()
+        # self.actor.compile(loss="categorical_crossentropy", optimizer=Adam(learning_rate=self.lr_actor))
+
+        # self.critic = Model(inputs=state, outputs=critic_out)
+        # self.critic.summary()
+        # self.critic.compile(loss="mse", optimizer=Adam(learning_rate=self.lr_critic))
+        
+        state = Input(shape=(num_states,))
+        x = Dense(24, activation="relu")(state)
+
+        actor_out = Dense(self.num_actions, activation="softmax")(x)
         self.actor = Model(inputs=state, outputs=actor_out)
         self.actor.summary()
-        self.actor.compile(loss="categorical_crossentropy", optimizer=Adam(learning_rate=self.lr_actor))
+        self.actor.compile(loss="categorical_crossentropy", optimizer=Adam(lr=self.lr_actor))
 
+        critic_out = Dense(1)(x)
         self.critic = Model(inputs=state, outputs=critic_out)
         self.critic.summary()
-        self.critic.compile(loss="mse", optimizer=Adam(learning_rate=self.lr_critic))
-        
+        self.critic.compile(loss="mse", optimizer=Adam(lr=self.lr_critic))
+
 
     def fit_actor(self, state, action):
         self.actor.fit(state, action, verbose=0)

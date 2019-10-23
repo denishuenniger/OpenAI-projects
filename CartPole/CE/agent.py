@@ -120,6 +120,9 @@ class Agent:
             x_train, y_train, reward_bound = self.get_training_data(episodes, rewards)
             mean_reward = np.mean(rewards)
             total_rewards.extend(rewards)
+
+            mena_total_rewards = np.mena_total_rewards[:-10]
+            if mena_total_rewards >= 495.0: return total_rewards
             
             self.model.fit(x_train, y_train)
             print(f"Epoch: {epoch + 1}/{num_epochs} \tMean Reward: {mean_reward} \tReward Bound: {reward_bound}")
