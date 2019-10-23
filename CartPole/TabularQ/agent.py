@@ -9,7 +9,7 @@ from collections import defaultdict
 
 class Agent:
 
-    def __init__(self, env, gamma, alpha, epsilon):
+    def __init__(self, env, gamma, alpha, epsilon, epsilon_min, epsilon_decay):
         self.env = env
         self.num_states = self.env.observation_space.shape[0]
         self.num_actions = self.env.action_space.n
@@ -17,6 +17,8 @@ class Agent:
         self.gamma = gamma
         self.alpha = alpha
         self.epsilon = epsilon
+        self.epsilon_min = epsilon_min
+        self.epsilon_decay = epsilon_decay
 
         # File paths
         dirname = os.path.dirname(__file__)
@@ -25,7 +27,6 @@ class Agent:
 
 
     def convert_state(self, state):
-        print(state)
         return '_'.join([str(np.round(x, 2)) for x in state])
 
     
@@ -37,8 +38,7 @@ class Agent:
 
 
     def get_value(self, state):
-        state = self.convert_state(state)
-        values = np.max(self.q[state])
+        value = np.max(self.q[state])
 
         return value
 
@@ -61,15 +61,24 @@ class Agent:
 
     def save_q_values(self):
         with open(self.path_model, "wb") as file:
-            pickle.dumps(self.q)
+            pickle.dumps(dict(self.q))
 
     
     def load_q_values(self):
         try:
             with open(self.path_model, "rb") as file:
-                self.q = pickle.load(file)
+                self.q = defaultdict(pickle.load(file))
         except:
             print("Model does not exist! Create new model...")
+
+
+    def reduce_epsilon(self):
+        epsilon = self.epsilon * self.epsilon_decay
+
+        if epsilon >= self.epsilon_min:
+            self.epsilon = epsilon
+        else:
+            self.epsilon = self.epsilon_min
 
 
     def train(self, num_episodes):
@@ -83,15 +92,20 @@ class Agent:
             while True:
                 if np.random.random() <= self.epsilon:
                     action = self.get_random_action()
+                    self.reduce_epsilon()
                 else:
                     action = self.get_action(state)
 
                 next_state, reward, done, _ = self.env.step(action)
+                
+                if done and reward != 500.0: reward = -100.0
+                
                 self.update_q_values(state, action, reward, next_state)
                 total_reward += reward
                 state = next_state
 
                 if done:
+                    total_reward += 100
                     total_rewards.append(total_reward)
                     mean_total_rewards = np.mean(total_rewards[-10:])
 
@@ -121,7 +135,8 @@ class Agent:
                 total_reward += reward
 
                 if done:
-                    print(f"Episode: {episode} \tTotal Reward: {total_reward}")
+                    print(f"Episode: {episode + 1} \tTotal Reward: {total_reward}")
+                    break
 
 
     def plot_rewards(self, total_rewards):
@@ -135,16 +150,18 @@ class Agent:
 if __name__ == "__main__":
 
     # Hyperparameters
-    GAMMA = 0.95
-    ALPHA = 0.20
-    EPSILON = 0.1
+    GAMMA = 0.9
+    ALPHA = 0.8
+    EPSILON = 0.9
+    EPSILON_MIN = 0.1
+    EPSILON_DECAY = 0.95
 
     PLAY = False
-    EPISODES_TRAIN = 10000
+    EPISODES_TRAIN = 100000
     EPISODES_PLAY = 5
     
     env = gym.make("CartPole-v1")
-    agent = Agent(env, gamma=GAMMA, alpha=ALPHA, epsilon=EPSILON)
+    agent = Agent(env, gamma=GAMMA, alpha=ALPHA, epsilon=EPSILON, epsilon_min=EPSILON_MIN, epsilon_decay=EPSILON_DECAY)
 
     if not PLAY:
         total_rewards = agent.train(num_episodes=EPISODES_TRAIN)
