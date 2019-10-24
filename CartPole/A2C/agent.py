@@ -103,7 +103,7 @@ class Agent:
             state = state.reshape(1, self.num_states)
 
             while True:
-                self.env.redner()
+                self.env.render()
                 action = self.get_action(state)
                 state, reward, done, _ = self.env.step(action)
                 state = state.reshape(1, self.num_states)
@@ -128,7 +128,7 @@ if __name__ == "__main__":
     LR_ACTOR = 1e-3
     LR_CRITIC = 5e-3
 
-    PLAY = False
+    PLAY = True
     EPISODES_TRAIN = 10000
     EPISODES_PLAY = 5
 
