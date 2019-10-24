@@ -27,7 +27,7 @@ class Agent:
 
 
     def convert_state(self, state):
-        return '_'.join([str(np.round(x, 1)) for x in state])
+        return '_'.join([str(np.round(x, 2)) for x in state])
 
     
     def get_action(self, state):
@@ -58,7 +58,7 @@ class Agent:
 
     def save_q_values(self):
         with open(self.path_model, "wb") as file:
-            pickle.dumps(dict(self.q))
+            pickle.dump(dict(self.q), file)
 
     
     def load_q_values(self):
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     ALPHA = 0.2
     EPSILON = 0.1
     EPSILON_MIN = 0.01
-    EPSILON_DECAY = 0.99
+    EPSILON_DECAY = 0.98
 
     PLAY = False
     EPISODES_TRAIN = 100000
