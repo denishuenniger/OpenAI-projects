@@ -9,16 +9,15 @@ from collections import defaultdict
 
 class Agent:
 
-    def __init__(self, env, gamma, alpha, epsilon, epsilon_min, epsilon_decay):
+    def __init__(self, env, gamma, alpha, tau, on_policy):
         self.env = env
         self.num_states = self.env.observation_space.shape[0]
         self.num_actions = self.env.action_space.n
-        self.q = defaultdict(lambda : [np.random.random() for _ in range(self.num_actions)])
+        self.q = defaultdict(lambda : [0.0 for _ in range(self.num_actions)])
         self.gamma = gamma
         self.alpha = alpha
-        self.epsilon = epsilon
-        self.epsilon_min = epsilon_min
-        self.epsilon_decay = epsilon_decay
+        self.tau = tau
+        self.on_policy = on_policy
 
         # File paths
         dirname = os.path.dirname(__file__)
@@ -27,29 +26,34 @@ class Agent:
 
 
     def convert_state(self, state):
-        return '_'.join([str(np.round(x, 2)) for x in state])
+        return "_".join([str(np.round(x, 2)) for x in state])
+
+
+    def softmax(self, x):
+        return np.exp(np.asarray(x) / self.tau) / sum(np.exp(np.asarray(x) / self.tau))
 
     
     def get_action(self, state):
-        state = self.convert_state(state)
-        action = np.argmax(self.q[state])
+        policy = self.softmax(self.q[state])
+        action = np.random.choice(self.num_actions, p=policy)
 
         return action
 
 
-    def get_value(self, state):
-        return np.max(self.q[state])
+    def get_q_value(self, state):
+        if self.on_policy:
+            q_value = self.q[state][self.get_action(state)]
+        else:
+            q_value = np.max(self.q[state])
 
-
-    def get_random_action(self):
-        return self.env.action_space.sample()
+        return q_value
 
 
     def update_q_values(self, state, action, reward, next_state):
         state = self.convert_state(state)
         next_state = self.convert_state(next_state)
         
-        q_update = reward + self.gamma * self.get_value(next_state)
+        q_update = reward + self.gamma * self.get_q_value(next_state)
         q = self.q[state][action]
         q = (1 - self.alpha) * q + self.alpha * q_update
 
@@ -69,15 +73,6 @@ class Agent:
             print("Model does not exist! Create new model...")
 
 
-    def reduce_epsilon(self):
-        epsilon = self.epsilon * self.epsilon_decay
-
-        if epsilon >= self.epsilon_min:
-            self.epsilon = epsilon
-        else:
-            self.epsilon = self.epsilon_min
-
-
     def train(self, num_episodes):
         total_rewards = []
         self.load_q_values()  
@@ -87,12 +82,7 @@ class Agent:
             total_reward = 0.0
 
             while True:
-                if np.random.random() < self.epsilon:
-                    action = self.get_random_action()
-                    self.reduce_epsilon()
-                else:
-                    action = self.get_action(state)
-
+                action = self.get_action(self.convert_state(state))
                 next_state, reward, done, _ = self.env.step(action)
                 
                 if done and reward != 500.0: reward = -100.0
@@ -147,18 +137,17 @@ class Agent:
 if __name__ == "__main__":
 
     # Hyperparameters
-    GAMMA = 0.98
+    GAMMA = 0.9
     ALPHA = 0.2
-    EPSILON = 0.1
-    EPSILON_MIN = 0.01
-    EPSILON_DECAY = 0.98
+    TAU = 0.3
+    ON_POLICY = False
 
     PLAY = False
     EPISODES_TRAIN = 100000
     EPISODES_PLAY = 5
     
     env = gym.make("CartPole-v1")
-    agent = Agent(env, gamma=GAMMA, alpha=ALPHA, epsilon=EPSILON, epsilon_min=EPSILON_MIN, epsilon_decay=EPSILON_DECAY)
+    agent = Agent(env, gamma=GAMMA, alpha=ALPHA, tau=TAU, on_policy=ON_POLICY)
 
     if not PLAY:
         total_rewards = agent.train(num_episodes=EPISODES_TRAIN)
