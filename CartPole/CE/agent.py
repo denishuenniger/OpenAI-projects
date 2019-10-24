@@ -161,6 +161,11 @@ class Agent:
 
 
     def plot_rewards(self, total_rewards):
+        """
+        Plots the total rewards over the episodes.
+            total_rewards   = Total Rewards over a given number if episodes
+        """
+
         plt.plot(range(len(total_rewards)), total_rewards, linewidth=0.8)
         plt.xlabel("Episode")
         plt.ylabel("Reward")

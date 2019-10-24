@@ -49,13 +49,17 @@ class Agent:
         return q_value
 
 
-    def update_q_values(self, state, action, reward, next_state):
+    def update_q_values(self, state, action, reward, next_state, done):
         state = self.convert_state(state)
         next_state = self.convert_state(next_state)
         
-        q_update = reward + self.gamma * self.get_q_value(next_state)
+        if done:
+            q_target = reward
+        else:
+            q_target = reward + self.gamma * self.get_q_value(next_state)
+        
         q = self.q[state][action]
-        q = (1 - self.alpha) * q + self.alpha * q_update
+        q = (1 - self.alpha) * q + self.alpha * q_target
 
         self.q[state][action] = q
 
@@ -87,7 +91,7 @@ class Agent:
                 
                 if done and reward != 500.0: reward = -100.0
                 
-                self.update_q_values(state, action, reward, next_state)
+                self.update_q_values(state, action, reward, next_state, done)
                 total_reward += reward
                 state = next_state
 

@@ -10,7 +10,7 @@ from model import DQN
 class Agent:
 
     def __init__(self, env, replay_buffer_size, train_start,
-                    gamma, alpha, batch_size, learning_rate):
+                    alpha, gamma, batch_size, learning_rate):
         # Environment variables
         self.env = env
         self.num_states = self.env.observation_space.shape[0]
@@ -19,9 +19,9 @@ class Agent:
         # Agent variables
         self.replay_buffer_size = replay_buffer_size
         self.train_start = train_start
-        self.memory = deque(maxlen=self.replay_buffer_size)
-        self.gamma = gamma
+        self.buffer = deque(maxlen=self.replay_buffer_size)
         self.alpha = alpha
+        self.gamma = gamma
         
         #DQN variables
         self.learning_rate = learning_rate
@@ -43,7 +43,7 @@ class Agent:
         return action
 
 
-    def train(self, num_episodes):
+    def train(self, num_episodes, report_interval):
         try:
             self.model.load(self.path_model)
         except:
@@ -74,26 +74,28 @@ class Agent:
                     total_rewards.append(total_reward)
                     mean_total_rewards = np.mean(total_rewards[-10:])
 
-                    print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
-
                     if mean_total_rewards > 495.0:
                         self.model.save(self.path_model)
                         return total_rewards
 
+                    if (episode + 1) % report_interval == 0:
+                        print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
+
+                    self.target_model.update(self.model)
                     break
 
         self.model.save(self.path_model)
         return total_rewards
-
-
+    
+    
     def remember(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done))
+        self.buffer.append((state, action, reward, next_state, done))
 
 
     def replay(self):
-        if len(self.memory) < self.train_start: return
+        if len(self.buffer) < self.train_start: return
 
-        minibatch = random.sample(self.memory, self.batch_size)
+        minibatch = random.sample(self.buffer, self.batch_size)
         states, actions, rewards, next_states, dones = zip(*minibatch)
 
         states = np.concatenate(states)
@@ -107,9 +109,11 @@ class Agent:
             done = dones[i]
 
             if done:
-                q_values[i][action] = rewards[i]
+                q_target = rewards[i]
             else:
-                q_values[i][action] = rewards[i] + self.gamma * np.max(next_q_values[i])
+                q_target = rewards[i] + self.gamma * np.max(next_q_values[i])
+
+            q_values[i][action] = (1 - self.alpha) * q_values[i][action] + self.alpha * q_target
 
         self.model.fit(states, q_values)
 
@@ -151,11 +155,12 @@ if __name__ == "__main__":
     TRAIN_START = 1000
     GAMMA = 0.95
     ALPHA = 0.2
-    BATCH_SIZE = 32
-    LEARNING_RATE = 1e-3
+    BATCH_SIZE = 128
+    LEARNING_RATE = 1e-4
 
     PLAY = False
-    EPISODES_TRAIN = 10000
+    REPORT_INTERVAL = 100
+    EPISODES_TRAIN = 100000
     EPISODES_PLAY = 5
 
 
@@ -169,7 +174,7 @@ if __name__ == "__main__":
                 learning_rate=LEARNING_RATE)
     
     if not PLAY:
-        total_rewards = agent.train(num_episodes=EPISODES_TRAIN)
+        total_rewards = agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)

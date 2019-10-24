@@ -7,10 +7,11 @@ from model import DNN
 
 class Agent:
 
-    def __init__(self, env, gamma, lr_actor, lr_critic):
+    def __init__(self, env, alpha, gamma, lr_actor, lr_critic):
         self.env = env
         self.num_states = self.env.observation_space.shape[0]
         self.num_actions = self.env.action_space.n
+        self.alpha = alpha
         self.gamma = gamma
         self.lr_actor = lr_actor
         self.lr_critic = lr_critic
@@ -46,9 +47,9 @@ class Agent:
 
         self.model.fit_actor(state, advantages)
         self.model.fit_critic(state, values)
-
-
-    def train(self, num_episodes):
+    
+    
+    def train(self, num_episodes, report_interval):
         try:
             self.model.load_actor(self.path_actor)
             self.model.load_critic(self.path_critic)
@@ -70,16 +71,17 @@ class Agent:
                 if done and reward != 500.0: reward = -100.0
 
                 self.update_policy(state, action, reward, next_state, done)
+
                 total_reward += reward
                 state = next_state
 
                 if done:
                     total_reward += 100.0
                     total_rewards.append(total_reward)
-                    idx = -min(len(total_rewards), 10)
-                    mean_total_rewards = np.mean(total_rewards[idx:])
+                    mean_total_rewards = np.mean(total_rewards[-10:])
                     
-                    print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
+                    if (episode + 1) % report_interval == 0:
+                        print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
                     
                     if mean_total_rewards >= 495.0:
                         self.model.save_actor(self.path_actor)
@@ -124,19 +126,25 @@ class Agent:
 if __name__ == "__main__":
 
     # Hyperparameters
-    GAMMA = 0.98
+    ALPHA = 0.2
+    GAMMA = 0.95
     LR_ACTOR = 1e-3
     LR_CRITIC = 5e-3
 
-    PLAY = True
+    PLAY = False
+    REPORT_INTERVAL = 100
     EPISODES_TRAIN = 10000
     EPISODES_PLAY = 5
 
     env = gym.make("CartPole-v1")
-    agent = Agent(env, gamma = GAMMA, lr_actor=LR_ACTOR, lr_critic=LR_CRITIC)
+    agent = Agent(env,
+                alpha=ALPHA,
+                gamma = GAMMA,
+                lr_actor=LR_ACTOR,
+                lr_critic=LR_CRITIC)
     
     if not PLAY:
-        total_rewards = agent.train(num_episodes=EPISODES_TRAIN)
+        total_rewards = agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)
