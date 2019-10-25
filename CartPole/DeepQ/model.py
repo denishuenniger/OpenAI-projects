@@ -13,7 +13,6 @@ class DQN(Model):
 
         state = Input(shape=(num_states,))
         x = Dense(32, activation="relu")(state)
-        x = Dense(32, activation="relu")(x)
         action = Dense(num_actions)(x)
         self.model = Model(inputs=state, outputs=action)
         self.model.summary()

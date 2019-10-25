@@ -105,7 +105,7 @@ class Agent:
         return x_train, y_train, reward_bound
 
 
-    def train(self, num_epochs, num_episodes):
+    def train(self, num_epochs, num_episodes, report_interval):
         """
         Trains the Neural Network model.
             num_epochs      = Number of training epochs
@@ -125,15 +125,16 @@ class Agent:
             mean_reward = np.mean(rewards)
             total_rewards.extend(rewards)
             
+            if (epoch + 1) % report_interval == 0:
+                print(f"Epoch: {epoch + 1}/{num_epochs} \tMean Reward: {mean_reward} \tReward Bound: {reward_bound}")
+            
             if mean_reward >= 495.0:
                 self.model.save(self.path_model)
                 return total_rewards
             
             self.model.fit(x_train, y_train)
-            print(f"Epoch: {epoch + 1}/{num_epochs} \tMean Reward: {mean_reward} \tReward Bound: {reward_bound}")
 
         self.model.save(self.path_model)
-        
         return total_rewards
 
    
@@ -169,26 +170,29 @@ class Agent:
         plt.plot(range(len(total_rewards)), total_rewards, linewidth=0.8)
         plt.xlabel("Episode")
         plt.ylabel("Reward")
-        plt.title("Total Rewards")
+        plt.title("CE-Learning")
         plt.savefig(self.path_plot)
 
 
+# Main program
 if __name__ == "__main__":
     
     # Hyperparameters
     PERCENTILE = 0.75
     LEARNING_RATE = 1e-3
 
-    PLAY = True
+    PLAY = False
+    REPORT_INTERVAL = 10
     EPOCHS_TRAIN = 100
     EPISODES_TRAIN = 100
     EPISODES_PLAY = 5
 
     env = gym.make("CartPole-v1")
+
     agent = Agent(env, p=PERCENTILE, lr=LEARNING_RATE)
     
     if not PLAY:
-        total_rewards = agent.train(num_epochs=EPOCHS_TRAIN, num_episodes=EPISODES_TRAIN)
+        total_rewards = agent.train(num_epochs=EPOCHS_TRAIN, num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)

@@ -9,14 +9,17 @@ from collections import defaultdict
 
 class Agent:
 
-    def __init__(self, env, gamma, alpha, tau, on_policy):
+    def __init__(self, env, gamma, alpha,
+                    epsilon, epsilon_min, epsilon_decay, on_policy):
         self.env = env
         self.num_states = self.env.observation_space.shape[0]
         self.num_actions = self.env.action_space.n
         self.q = defaultdict(lambda : [0.0 for _ in range(self.num_actions)])
-        self.gamma = gamma
         self.alpha = alpha
-        self.tau = tau
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.epsilon_min = epsilon_min
+        self.epsilon_decay = epsilon_decay
         self.on_policy = on_policy
 
         # File paths
@@ -29,13 +32,20 @@ class Agent:
         return "_".join([str(np.round(x, 2)) for x in state])
 
 
-    def softmax(self, x):
-        return np.exp(np.asarray(x) / self.tau) / sum(np.exp(np.asarray(x) / self.tau))
+    def reduce_epsilon(self):
+        epsilon = self.epsilon * self.epsilon_decay
+
+        if epsilon >= self.epsilon_min:
+            self.epsilon = epsilon
+        else:
+            self.epsilon = self.epsilon_min
 
     
     def get_action(self, state):
-        policy = self.softmax(self.q[state])
-        action = np.random.choice(self.num_actions, p=policy)
+        if np.random.random() < self.epsilon:
+            action = self.env.action_space.sample()
+        else:
+            action = np.argmax(self.q[state])
 
         return action
 
@@ -77,7 +87,7 @@ class Agent:
             print("Model does not exist! Create new model...")
 
 
-    def train(self, num_episodes):
+    def train(self, num_episodes, report_interval):
         total_rewards = []
         self.load_q_values()  
         
@@ -100,7 +110,8 @@ class Agent:
                     total_rewards.append(total_reward)
                     mean_total_rewards = np.mean(total_rewards[-10:])
 
-                    print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
+                    if (episode + 1) % report_interval == 0:
+                        print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
 
                     if mean_total_rewards >= 495.0:
                         self.save_q_values()
@@ -134,27 +145,40 @@ class Agent:
         plt.plot(range(len(total_rewards)), total_rewards, linewidth=0.8)
         plt.xlabel("Episode")
         plt.ylabel("Reward")
-        plt.title("Total Rewards")
+        plt.title("Tabular Q-Learning")
         plt.savefig(self.path_plot)
 
 
+# Main program
 if __name__ == "__main__":
 
     # Hyperparameters
     GAMMA = 0.9
     ALPHA = 0.2
-    TAU = 0.3
+    EPSILON = 0.1
+    EPSILON_MIN = 0.01
+    EPSILON_DECAY = 0.99
     ON_POLICY = False
 
     PLAY = False
+    REPORT_INTERVAL = 100
     EPISODES_TRAIN = 100000
     EPISODES_PLAY = 5
     
     env = gym.make("CartPole-v1")
-    agent = Agent(env, gamma=GAMMA, alpha=ALPHA, tau=TAU, on_policy=ON_POLICY)
+    env.seed(0)
+    np.random.seed(0)
+    
+    agent = Agent(env,
+                gamma=GAMMA,
+                alpha=ALPHA,
+                epsilon=EPSILON,
+                epsilon_min=EPSILON_MIN,
+                epsilon_decay=EPSILON_DECAY,
+                on_policy=ON_POLICY)
 
     if not PLAY:
-        total_rewards = agent.train(num_episodes=EPISODES_TRAIN)
+        total_rewards = agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)

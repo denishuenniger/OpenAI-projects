@@ -2,6 +2,7 @@ import gym
 import os
 import random
 import numpy as np
+import matplotlib.pyplot as plt
 
 from collections import deque
 from model import DQN
@@ -88,14 +89,14 @@ class Agent:
                 if done:
                     total_reward += 100.0
                     total_rewards.append(total_reward)
-                    mean_total_rewards = np.mean(total_rewards[-10:])
+                    mean_total_rewards = np.mean(total_rewards[-5:])
+
+                    if (episode + 1) % report_interval == 0:
+                        print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
 
                     if mean_total_rewards > 495.0:
                         self.model.save(self.path_model)
                         return total_rewards
-
-                    if (episode + 1) % report_interval == 0:
-                        print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
 
                     self.target_model.update(self.model)
                     break
@@ -159,11 +160,11 @@ class Agent:
         plt.plot(range(len(total_rewards)), total_rewards, linewidth=0.8)
         plt.xlabel("Episode")
         plt.ylabel("Reward")
-        plt.title("DQN - Learning")
+        plt.title("DQN-Learning")
         plt.savefig(self.path_plot)
 
 
-
+# Main program
 if __name__ == "__main__":
 
     # Hyperparameters
@@ -174,8 +175,8 @@ if __name__ == "__main__":
     EPSILON = 0.1
     EPSILON_MIN = 0.01
     EPSILON_DECAY = 0.99
-    BATCH_SIZE = 128
-    LEARNING_RATE = 1e-4
+    BATCH_SIZE = 32
+    LEARNING_RATE = 1e-3
 
     PLAY = False
     REPORT_INTERVAL = 100
@@ -184,6 +185,7 @@ if __name__ == "__main__":
 
 
     env = gym.make("CartPole-v1")
+
     agent = Agent(env, 
                 replay_buffer_size=REPLAY_BUFFER_SIZE,
                 train_start=TRAIN_START,
@@ -200,4 +202,3 @@ if __name__ == "__main__":
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)
-
