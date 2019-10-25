@@ -4,6 +4,7 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
+from scipy.stats import linregress
 from collections import deque
 from model import DQN
 
@@ -59,7 +60,7 @@ class Agent:
             self.epsilon = self.epsilon_min
 
     
-    def train(self, num_episodes, report_interval):
+    def train(self, num_episodes, report_interval, mean_bound):
         try:
             self.model.load(self.path_model)
         except:
@@ -89,7 +90,7 @@ class Agent:
                 if done:
                     total_reward += 100.0
                     total_rewards.append(total_reward)
-                    mean_total_rewards = np.mean(total_rewards[-5:])
+                    mean_total_rewards = np.mean(total_rewards[-mean_bound:])
 
                     if (episode + 1) % report_interval == 0:
                         print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
@@ -157,10 +158,16 @@ class Agent:
 
 
     def plot_rewards(self, total_rewards):
-        plt.plot(range(len(total_rewards)), total_rewards, linewidth=0.8)
+        x = range(len(total_rewards))
+        y = total_rewards
+
+        slope, intercept, _, _, _ = linregress(x, y)
+        
+        plt.plot(x, y, linewidth=0.8)
+        plt.plot(x, slope * x + intercept, color="r", linestyle="-.")
         plt.xlabel("Episode")
         plt.ylabel("Reward")
-        plt.title("DQN-Learning")
+        plt.title("Tabular Q-Learning")
         plt.savefig(self.path_plot)
 
 
@@ -171,15 +178,16 @@ if __name__ == "__main__":
     REPLAY_BUFFER_SIZE = 500000
     TRAIN_START = 1000
     ALPHA = 0.2
-    GAMMA = 0.95
+    GAMMA = 0.9
     EPSILON = 0.1
     EPSILON_MIN = 0.01
-    EPSILON_DECAY = 0.99
+    EPSILON_DECAY = 0.98
     BATCH_SIZE = 32
     LEARNING_RATE = 1e-3
 
     PLAY = False
     REPORT_INTERVAL = 100
+    MEAN_BOUND = 5
     EPISODES_TRAIN = 100000
     EPISODES_PLAY = 5
 
@@ -198,7 +206,7 @@ if __name__ == "__main__":
                 learning_rate=LEARNING_RATE)
     
     if not PLAY:
-        total_rewards = agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL)
+        total_rewards = agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL, mean_bound=MEAN_BOUND)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)

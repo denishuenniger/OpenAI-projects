@@ -1,6 +1,6 @@
 from keras.models import Model, Sequential, Input
 from keras.layers import Dense
-from keras.optimizers import Adam, RMSprop
+from keras.optimizers import Adam
 
 
 class DNN(Model):
@@ -13,12 +13,13 @@ class DNN(Model):
         self.lr = lr
 
         state = Input(shape=(self.num_states,))
-        x = Dense(32, activation="relu")(state)
+        x = Dense(24, activation="relu")(state)
+        x = Dense(24, activation="relu")(x)
         action = Dense(self.num_actions, activation="softmax")(x)
 
         self.model = Model(inputs=state, outputs=action)
         self.model.summary()
-        self.model.compile(loss="categorical_crossentropy", optimizer=RMSprop(learning_rate=self.lr))
+        self.model.compile(loss="categorical_crossentropy", optimizer=Adam(learning_rate=self.lr))
 
 
     def fit(self, state, action):

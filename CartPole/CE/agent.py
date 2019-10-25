@@ -2,6 +2,8 @@ import gym
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+
+from scipy.stats import linregress
 from keras.utils import to_categorical
 from model import DNN
 
@@ -53,7 +55,7 @@ class Agent:
     
     def sample(self, num_episodes):
         """
-        Samples an running agent for a given number of episodes.
+        Samples a running agent for a given number of episodes.
             num_episodes = Number of episodes
         """
 
@@ -70,7 +72,7 @@ class Agent:
                 episodes[episode].append((state, action))
                 state = next_state
                 
-                if done and reward != 500.0: reward = -100.0 
+                if done and reward != 500.0: reward = -100.0
                 
                 total_reward += reward
 
@@ -105,11 +107,12 @@ class Agent:
         return x_train, y_train, reward_bound
 
 
-    def train(self, num_epochs, num_episodes, report_interval):
+    def train(self, num_epochs, num_episodes, report_interval, mean_bound):
         """
         Trains the Neural Network model.
             num_epochs      = Number of training epochs
-            num_episodes    = Number of episodes to sample 
+            num_episodes    = Number of episodes to sample
+            report_interval = Episode interval for reporting
         """
 
         try:
@@ -128,7 +131,7 @@ class Agent:
             if (epoch + 1) % report_interval == 0:
                 print(f"Epoch: {epoch + 1}/{num_epochs} \tMean Reward: {mean_reward} \tReward Bound: {reward_bound}")
             
-            if mean_reward >= 495.0:
+            if mean_reward >= mean_bound:
                 self.model.save(self.path_model)
                 return total_rewards
             
@@ -162,15 +165,16 @@ class Agent:
 
 
     def plot_rewards(self, total_rewards):
-        """
-        Plots the total rewards over the episodes.
-            total_rewards   = Total Rewards over a given number if episodes
-        """
+        x = range(len(total_rewards))
+        y = total_rewards
 
-        plt.plot(range(len(total_rewards)), total_rewards, linewidth=0.8)
+        slope, intercept, _, _, _ = linregress(x, y)
+        
+        plt.plot(x, y, linewidth=0.8)
+        plt.plot(x, slope * x + intercept, color="r", linestyle="-.")
         plt.xlabel("Episode")
         plt.ylabel("Reward")
-        plt.title("CE-Learning")
+        plt.title("Tabular Q-Learning")
         plt.savefig(self.path_plot)
 
 
@@ -183,16 +187,19 @@ if __name__ == "__main__":
 
     PLAY = False
     REPORT_INTERVAL = 10
+    MEAN_BOUND = 495.0
     EPOCHS_TRAIN = 100
     EPISODES_TRAIN = 100
     EPISODES_PLAY = 5
 
     env = gym.make("CartPole-v1")
 
-    agent = Agent(env, p=PERCENTILE, lr=LEARNING_RATE)
+    agent = Agent(env,
+                p=PERCENTILE,
+                lr=LEARNING_RATE)
     
     if not PLAY:
-        total_rewards = agent.train(num_epochs=EPOCHS_TRAIN, num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL)
+        total_rewards = agent.train(num_epochs=EPOCHS_TRAIN, num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL, mean_bound=MEAN_BOUND)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)

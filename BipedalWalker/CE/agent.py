@@ -29,7 +29,7 @@ class Agent:
         # Agent variables
         self.env = env
         self.num_states = self.env.observation_space.shape[0]
-        self.num_actions = self.env.action_space.n
+        self.num_actions = self.env.action_space.shape[0]
         self.model = DNN(self.num_states, self.num_actions, self.lr)
 
         # File paths

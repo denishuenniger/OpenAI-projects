@@ -2,13 +2,16 @@ import gym
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+
+from scipy.stats import linregress
 from model import DNN
 
 
 class Agent:
 
     def __init__(self, env, alpha, gamma,
-                epsilon, epsilon_min, epsilon_decay, lr_actor, lr_critic):
+                epsilon, epsilon_min, epsilon_decay,
+                lr_actor, lr_critic):
         self.env = env
         self.num_states = self.env.observation_space.shape[0]
         self.num_actions = self.env.action_space.n
@@ -64,7 +67,7 @@ class Agent:
         self.model.fit_critic(state, values)
     
     
-    def train(self, num_episodes, report_interval):
+    def train(self, num_episodes, report_interval, mean_bound):
         try:
             self.model.load_actor(self.path_actor)
             self.model.load_critic(self.path_critic)
@@ -94,7 +97,7 @@ class Agent:
                 if done:
                     total_reward += 100.0
                     total_rewards.append(total_reward)
-                    mean_total_rewards = np.mean(total_rewards[-5:])
+                    mean_total_rewards = np.mean(total_rewards[-mean_bound:])
                     
                     if (episode + 1) % report_interval == 0:
                         print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
@@ -132,10 +135,16 @@ class Agent:
 
 
     def plot_rewards(self, total_rewards):
-        plt.plot(range(len(total_rewards)), total_rewards, linewidth=0.8)
+        x = range(len(total_rewards))
+        y = total_rewards
+
+        slope, intercept, _, _, _ = linregress(x, y)
+        
+        plt.plot(x, y, linewidth=0.8)
+        plt.plot(x, slope * x + intercept, color="r", linestyle="-.")
         plt.xlabel("Episode")
         plt.ylabel("Reward")
-        plt.title("A2C-Learning")
+        plt.title("Tabular Q-Learning")
         plt.savefig(self.path_plot)
 
 
@@ -153,6 +162,7 @@ if __name__ == "__main__":
 
     PLAY = False
     REPORT_INTERVAL = 100
+    MEAN_BOUND = 5
     EPISODES_TRAIN = 10000
     EPISODES_PLAY = 5
 
@@ -168,7 +178,7 @@ if __name__ == "__main__":
                 lr_critic=LR_CRITIC)
     
     if not PLAY:
-        total_rewards = agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL)
+        total_rewards = agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL, mean_bound=MEAN_BOUND)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)

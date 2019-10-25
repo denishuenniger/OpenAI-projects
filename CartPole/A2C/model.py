@@ -15,13 +15,16 @@ class DNN(Model):
         
         state = Input(shape=(num_states,))
         x = Dense(32, activation="relu")(state)
+        x = Dense(32, activation="relu")(x)
 
-        actor_out = Dense(self.num_actions)(x)
+        actor_x = Dense(16, activation="relu")(x)
+        actor_out = Dense(self.num_actions)(actor_x)
         self.actor = Model(inputs=state, outputs=actor_out)
         self.actor.summary()
         self.actor.compile(loss="mse", optimizer=Adam(lr=self.lr_actor))
 
-        critic_out = Dense(1)(x)
+        critic_x = Dense(16, activation="relu")(x)
+        critic_out = Dense(1)(critic_x)
         self.critic = Model(inputs=state, outputs=critic_out)
         self.critic.summary()
         self.critic.compile(loss="mse", optimizer=Adam(lr=self.lr_critic))

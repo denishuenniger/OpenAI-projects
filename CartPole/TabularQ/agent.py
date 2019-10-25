@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from collections import defaultdict
-
+from scipy.stats import linregress
 
 class Agent:
 
@@ -14,7 +14,7 @@ class Agent:
         self.env = env
         self.num_states = self.env.observation_space.shape[0]
         self.num_actions = self.env.action_space.n
-        self.q = defaultdict(lambda : [0.0 for _ in range(self.num_actions)])
+        self.q = defaultdict(lambda : [np.random.random() for _ in range(self.num_actions)])
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
@@ -29,7 +29,7 @@ class Agent:
 
 
     def convert_state(self, state):
-        return "_".join([str(np.round(x, 1)) for x in state])
+        return "_".join([str(np.round(x, 2)) for x in state])
 
 
     def reduce_epsilon(self):
@@ -82,12 +82,12 @@ class Agent:
     def load_q_values(self):
         try:
             with open(self.path_model, "rb") as file:
-                self.q = defaultdict(pickle.load(file))
+                self.q = defaultdict(lambda : [np.random.random() for _ in range(self.num_actions)], pickle.load(file))
         except:
             print("Model does not exist! Create new model...")
 
 
-    def train(self, num_episodes, report_interval):
+    def train(self, num_episodes, report_interval, mean_bound):
         total_rewards = []
         self.load_q_values()  
         
@@ -108,7 +108,7 @@ class Agent:
                 if done:
                     total_reward += 100.0
                     total_rewards.append(total_reward)
-                    mean_total_rewards = np.mean(total_rewards[-10:])
+                    mean_total_rewards = np.mean(total_rewards[-mean_bound:])
 
                     if (episode + 1) % report_interval == 0:
                         print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
@@ -142,7 +142,13 @@ class Agent:
 
 
     def plot_rewards(self, total_rewards):
-        plt.plot(range(len(total_rewards)), total_rewards, linewidth=0.8)
+        x = range(len(total_rewards))
+        y = total_rewards
+
+        slope, intercept, _, _, _ = linregress(x, y)
+        
+        plt.plot(x, y, linewidth=0.8)
+        plt.plot(x, slope * x + intercept, color="r", linestyle="-.")
         plt.xlabel("Episode")
         plt.ylabel("Reward")
         plt.title("Tabular Q-Learning")
@@ -157,11 +163,13 @@ if __name__ == "__main__":
     ALPHA = 0.2
     EPSILON = 0.1
     EPSILON_MIN = 0.01
-    EPSILON_DECAY = 0.99
+    EPSILON_DECAY = 0.98
+    REWARD_DEAD = -1000.0
     ON_POLICY = False
 
     PLAY = False
     REPORT_INTERVAL = 100
+    MEAN_BOUND = 5
     EPISODES_TRAIN = 100000
     EPISODES_PLAY = 5
     
@@ -175,10 +183,11 @@ if __name__ == "__main__":
                 epsilon=EPSILON,
                 epsilon_min=EPSILON_MIN,
                 epsilon_decay=EPSILON_DECAY,
+                reward_dead=REWARD_DEAD,
                 on_policy=ON_POLICY)
 
     if not PLAY:
-        total_rewards = agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL)
+        total_rewards = agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL, mean_bound=MEAN_BOUND)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)
