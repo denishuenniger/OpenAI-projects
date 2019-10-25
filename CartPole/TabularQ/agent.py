@@ -29,7 +29,7 @@ class Agent:
 
 
     def convert_state(self, state):
-        return "_".join([str(np.round(x, 2)) for x in state])
+        return "_".join([str(np.round(x, 1)) for x in state])
 
 
     def reduce_epsilon(self):

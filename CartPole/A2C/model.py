@@ -1,6 +1,6 @@
 from keras.layers import Input, Dense
 from keras.models import Model, Sequential
-from keras.optimizers import Adam
+from keras.optimizers import Adam, RMSprop
 
 
 class DNN(Model):

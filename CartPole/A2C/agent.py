@@ -144,7 +144,7 @@ if __name__ == "__main__":
 
     # Hyperparameters
     ALPHA = 0.2
-    GAMMA = 0.95
+    GAMMA = 0.98
     EPSILON = 0.1
     EPSILON_MIN = 0.01
     EPSILON_DECAY = 0.99
