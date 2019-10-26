@@ -1,5 +1,5 @@
 from keras.models import Model, Sequential, Input
-from keras.layers import Dense
+from keras.layers import Dense, Activation
 from keras.optimizers import Adam, RMSprop
 
 
@@ -12,13 +12,12 @@ class DQN(Model):
         self.lr = lr
 
         state = Input(shape=(num_states,))
-        x = Dense(128, activation="relu")(state)
-        x = Dense(64, activation="relu")(x)
-        x = Dense(64, activation="relu")(x)
-        x = Dense(32, activation="relu")(x)
-        x = Dense(32, activation="relu")(x)
-        x = Dense(16, activation="relu")(x)
-        action = Dense(num_actions)(x)
+        x = Dense(600)(state)
+        x = Activation("relu")(x)
+        x = Dense(300)(x)
+        x = Activation("relu")(x)
+        x = Dense(num_actions)(x)
+        action = Activation("tanh")(x)
         self.model = Model(inputs=state, outputs=action)
         self.model.summary()
         self.model.compile(loss="mse", optimizer=RMSprop(learning_rate=self.lr))

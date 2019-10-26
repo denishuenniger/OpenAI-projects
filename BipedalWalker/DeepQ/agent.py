@@ -168,19 +168,19 @@ class Agent:
 if __name__ == "__main__":
 
     # Hyperparameters
-    REPLAY_BUFFER_SIZE = 500000
+    REPLAY_BUFFER_SIZE = 1000000
     TRAIN_START = 1000
     ALPHA = 0.2
-    GAMMA = 0.9
+    GAMMA = 0.99
     EPSILON = 0.1
     EPSILON_MIN = 0.01
-    EPSILON_DECAY = 0.98
-    BATCH_SIZE = 32
-    LEARNING_RATE = 1e-3
+    EPSILON_DECAY = 0.99
+    BATCH_SIZE = 100
+    LEARNING_RATE = 0.0001
 
     PLAY = False
     REPORT_INTERVAL = 100
-    EPISODES_TRAIN = 100000
+    EPISODES_TRAIN = 10000
     EPISODES_PLAY = 5
 
 
