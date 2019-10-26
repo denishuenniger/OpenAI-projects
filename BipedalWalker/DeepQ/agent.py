@@ -46,7 +46,7 @@ class Agent:
         if np.random.random() < self.epsilon:
             action = self.env.action_space.sample()
         else:
-            action = np.argmax(self.model.predict(state))
+            action = self.model.predict(state)[0]
 
         return action
 
@@ -60,7 +60,7 @@ class Agent:
             self.epsilon = self.epsilon_min
 
     
-    def train(self, num_episodes, report_interval, mean_bound):
+    def train(self, num_episodes, report_interval):
         try:
             self.model.load(self.path_model)
         except:
@@ -70,13 +70,13 @@ class Agent:
 
         for episode in range(num_episodes):
             state = self.env.reset()
-            state = state.reshape((1, self.num_states))
+            state = state.reshape(1, self.num_states)
             total_reward = 0.0
 
             while True:
                 action = self.get_action(state)
                 next_state, reward, done, _ = self.env.step(action)
-                next_state = next_state.reshape((1, self.num_states))
+                next_state = next_state.reshape(1, self.num_states)
 
                 if done and reward != 500.0: reward = -100.0
 
@@ -90,14 +90,11 @@ class Agent:
                 if done:
                     total_reward += 100.0
                     total_rewards.append(total_reward)
-                    mean_total_rewards = np.mean(total_rewards[-mean_bound:])
 
                     if (episode + 1) % report_interval == 0:
-                        print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
-
-                    if mean_total_rewards > 495.0:
-                        self.model.save(self.path_model)
-                        return total_rewards
+                        print(f"Episode: {episode + 1}/{num_episodes}"
+                            f"\tTotal Reward: {total_reward}"
+                            f"\tMean Total Rewards: {mean_total_rewards}")
 
                     self.target_model.update(self.model)
                     break
@@ -123,7 +120,6 @@ class Agent:
         next_q_values = self.target_model.predict(next_states)
 
         for i in range(self.batch_size):
-            action = actions[i]
             done = dones[i]
 
             if done:
@@ -131,7 +127,7 @@ class Agent:
             else:
                 q_target = rewards[i] + self.gamma * np.max(next_q_values[i])
 
-            q_values[i][action] = (1 - self.alpha) * q_values[i][action] + self.alpha * q_target
+            q_values[i] = (1 - self.alpha) * q_values[i] + self.alpha * q_target
 
         self.model.fit(states, q_values)
 
@@ -153,7 +149,8 @@ class Agent:
                 total_reward += reward
 
                 if done:
-                    print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward}")
+                    print(f"Episode: {episode + 1}/{num_episodes}"
+                        f"\tTotal Reward: {total_reward}")
                     break
 
 
@@ -187,13 +184,11 @@ if __name__ == "__main__":
 
     PLAY = False
     REPORT_INTERVAL = 100
-    MEAN_BOUND = 5
     EPISODES_TRAIN = 100000
     EPISODES_PLAY = 5
 
 
-    env = gym.make("CartPole-v1")
-
+    env = gym.make("BipedalWalker-v2")
     agent = Agent(env, 
                 replay_buffer_size=REPLAY_BUFFER_SIZE,
                 train_start=TRAIN_START,
@@ -206,7 +201,8 @@ if __name__ == "__main__":
                 learning_rate=LEARNING_RATE)
     
     if not PLAY:
-        total_rewards = agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL, mean_bound=MEAN_BOUND)
+        total_rewards = agent.train(num_episodes=EPISODES_TRAIN,
+                                    report_interval=REPORT_INTERVAL)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)

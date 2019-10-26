@@ -14,7 +14,7 @@ class Agent:
                 lr_actor, lr_critic):
         self.env = env
         self.num_states = self.env.observation_space.shape[0]
-        self.num_actions = self.env.action_space.n
+        self.num_actions = self.env.action_space.shape[0]
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
@@ -166,8 +166,7 @@ if __name__ == "__main__":
     EPISODES_TRAIN = 10000
     EPISODES_PLAY = 5
 
-    env = gym.make("CartPole-v1")
-
+    env = gym.make("BipedalWalker-v2")
     agent = Agent(env,
                 alpha=ALPHA,
                 gamma = GAMMA,
@@ -178,7 +177,9 @@ if __name__ == "__main__":
                 lr_critic=LR_CRITIC)
     
     if not PLAY:
-        total_rewards = agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL, mean_bound=MEAN_BOUND)
+        total_rewards = agent.train(num_episodes=EPISODES_TRAIN,
+                                    report_interval=REPORT_INTERVAL,
+                                    mean_bound=MEAN_BOUND)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)
