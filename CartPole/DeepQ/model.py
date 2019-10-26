@@ -1,6 +1,6 @@
 from keras.models import Model, Sequential, Input
 from keras.layers import Dense
-from keras.optimizers import Adam
+from keras.optimizers import Adam, RMSprop
 
 
 class DQN(Model):
@@ -12,7 +12,7 @@ class DQN(Model):
         self.lr = lr
 
         state = Input(shape=(num_states,))
-        x = Dense(24, activation="relu")(state)
+        x = Dense(64, activation="relu")(state)
         action = Dense(num_actions)(x)
         self.model = Model(inputs=state, outputs=action)
         self.model.summary()

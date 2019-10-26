@@ -164,7 +164,6 @@ if __name__ == "__main__":
     EPSILON = 0.1
     EPSILON_MIN = 0.01
     EPSILON_DECAY = 0.98
-    REWARD_DEAD = -1000.0
     ON_POLICY = False
 
     PLAY = False
@@ -183,7 +182,6 @@ if __name__ == "__main__":
                 epsilon=EPSILON,
                 epsilon_min=EPSILON_MIN,
                 epsilon_decay=EPSILON_DECAY,
-                reward_dead=REWARD_DEAD,
                 on_policy=ON_POLICY)
 
     if not PLAY:
