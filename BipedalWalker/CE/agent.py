@@ -119,7 +119,7 @@ class Agent:
         return x_train, y_train, reward_bound
 
 
-    def train(self, num_epochs, num_episodes, report_interval, mean_bound):
+    def train(self, num_epochs, num_episodes, report_interval):
         """
         Trains the Neural Network model.
             num_epochs      = Number of training epochs
@@ -143,10 +143,6 @@ class Agent:
             
             if (epoch + 1) % report_interval == 0:
                 print(f"Epoch: {epoch + 1}/{num_epochs} \tMean Reward: {mean_reward} \tReward Bound: {reward_bound}")
-            
-            if mean_reward >= mean_bound:
-                self.model.save(self.path_model)
-                return total_rewards
             
             self.model.fit(x_train, y_train)
 
@@ -187,7 +183,7 @@ class Agent:
         plt.plot(x, slope * x + intercept, color="r", linestyle="-.")
         plt.xlabel("Episode")
         plt.ylabel("Reward")
-        plt.title("Tabular Q-Learning")
+        plt.title("CE-Learning")
         plt.savefig(self.path_plot)
 
 
@@ -203,7 +199,6 @@ if __name__ == "__main__":
 
     PLAY = False
     REPORT_INTERVAL = 10
-    MEAN_BOUND = 495.0
     EPOCHS_TRAIN = 100
     EPISODES_TRAIN = 100
     EPISODES_PLAY = 5
@@ -218,7 +213,9 @@ if __name__ == "__main__":
                 lr=LEARNING_RATE)
     
     if not PLAY:
-        total_rewards = agent.train(num_epochs=EPOCHS_TRAIN, num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL, mean_bound=MEAN_BOUND)
+        total_rewards = agent.train(num_epochs=EPOCHS_TRAIN,
+                                    num_episodes=EPISODES_TRAIN,
+                                    report_interval=REPORT_INTERVAL)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)
