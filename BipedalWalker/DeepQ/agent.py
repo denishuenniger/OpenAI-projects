@@ -78,8 +78,6 @@ class Agent:
                 next_state, reward, done, _ = self.env.step(action)
                 next_state = next_state.reshape(1, self.num_states)
 
-                if done and reward != 500.0: reward = -100.0
-
                 self.remember(state, action, reward, next_state, done)
                 self.replay()
                 self.reduce_epsilon()
@@ -88,13 +86,13 @@ class Agent:
                 total_reward += reward
 
                 if done:
-                    total_reward += 100.0
                     total_rewards.append(total_reward)
+                    mean_reward = np.mean(total_rewards)
 
                     if (episode + 1) % report_interval == 0:
                         print(f"Episode: {episode + 1}/{num_episodes}"
-                            f"\tTotal Reward: {total_reward}"
-                            f"\tMean Total Rewards: {mean_total_rewards}")
+                            f"\tReward: {total_reward : .2f}"
+                            f"\tMean Reward: {mean_reward : .2f}")
 
                     self.target_model.update(self.model)
                     break
@@ -120,9 +118,7 @@ class Agent:
         next_q_values = self.target_model.predict(next_states)
 
         for i in range(self.batch_size):
-            done = dones[i]
-
-            if done:
+            if dones[i]:
                 q_target = rewards[i]
             else:
                 q_target = rewards[i] + self.gamma * np.max(next_q_values[i])
@@ -164,7 +160,7 @@ class Agent:
         plt.plot(x, slope * x + intercept, color="r", linestyle="-.")
         plt.xlabel("Episode")
         plt.ylabel("Reward")
-        plt.title("Tabular Q-Learning")
+        plt.title("DQN-Learning")
         plt.savefig(self.path_plot)
 
 

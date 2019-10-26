@@ -13,14 +13,14 @@ class Agent:
         env           = Environment of the agent
         num_states    = Number of dimensions of the state space
         num_actions   = Number of dimensions of the action space
-        lr            = Learning rate for the Neural Network model
         p             = Percentile of generating training data
+        learning_rate = Learning rate for the Neural Network model
         model         = Neural Network model
     """
 
     def __init__(self, env,
-                p, epsilon,
-                epsilon_min, epsilon_decay, lr):
+                p, epsilon, epsilon_min, epsilon_decay,
+                learning_rate):
         """
         Constructor of the Agent class.
         """
@@ -30,13 +30,13 @@ class Agent:
         self.epsilon = epsilon
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
-        self.lr = lr
+        self.learning_rate = learning_rate
 
         # Agent variables
         self.env = env
         self.num_states = self.env.observation_space.shape[0]
         self.num_actions = self.env.action_space.shape[0]
-        self.model = DNN(self.num_states, self.num_actions, self.lr)
+        self.model = DNN(self.num_states, self.num_actions, self.learning_rate)
 
         # File paths
         directory = os.path.dirname(__file__)
@@ -142,7 +142,9 @@ class Agent:
             total_rewards.extend(rewards)
             
             if (epoch + 1) % report_interval == 0:
-                print(f"Epoch: {epoch + 1}/{num_epochs} \tMean Reward: {mean_reward} \tReward Bound: {reward_bound}")
+                print(f"Epoch: {epoch + 1}/{num_epochs}"
+                    f"\tMean Reward: {mean_reward}"
+                    f"\tReward Bound: {reward_bound}")
             
             self.model.fit(x_train, y_train)
 
@@ -210,7 +212,7 @@ if __name__ == "__main__":
                 epsilon=EPSILON,
                 epsilon_min=EPSILON_MIN,
                 epsilon_decay=EPSILON_DECAY,
-                lr=LEARNING_RATE)
+                learning_rate=LEARNING_RATE)
     
     if not PLAY:
         total_rewards = agent.train(num_epochs=EPOCHS_TRAIN,

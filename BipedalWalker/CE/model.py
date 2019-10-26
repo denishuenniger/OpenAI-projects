@@ -5,12 +5,12 @@ from keras.optimizers import Adam
 
 class DNN(Model):
 
-    def __init__(self, num_states, num_actions, lr):
+    def __init__(self, num_states, num_actions, learning_rate):
         super(DNN, self).__init__()
 
         self.num_states = num_states
         self.num_actions = num_actions
-        self.lr = lr
+        self.learning_rate = learning_rate
 
         state = Input(shape=(self.num_states,))
         x = Dense(64, activation="relu")(state)
@@ -18,7 +18,7 @@ class DNN(Model):
 
         self.model = Model(inputs=state, outputs=action)
         self.model.summary()
-        self.model.compile(loss="mse", optimizer=Adam(learning_rate=self.lr))
+        self.model.compile(loss="mse", optimizer=Adam(learning_rate=self.learning_rate))
 
 
     def fit(self, state, action):

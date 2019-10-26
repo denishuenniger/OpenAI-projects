@@ -67,7 +67,7 @@ class Agent:
         self.model.fit_critic(state, values)
     
     
-    def train(self, num_episodes, report_interval, mean_bound):
+    def train(self, num_episodes, report_interval):
         try:
             self.model.load_actor(self.path_actor)
             self.model.load_critic(self.path_critic)
@@ -97,18 +97,14 @@ class Agent:
                 if done:
                     total_reward += 100.0
                     total_rewards.append(total_reward)
-                    mean_total_rewards = np.mean(total_rewards[-mean_bound:])
+                    mean_reward = np.mean(total_rewards)
                     
                     if (episode + 1) % report_interval == 0:
-                        print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
-                    
-                    if mean_total_rewards >= 495.0:
-                        self.model.save_actor(self.path_actor)
-                        self.model.save_critic(self.path_critic)
+                        print(f"Episode: {episode + 1}/{num_episodes}"
+                            f"\tReward: {total_reward}"
+                            f"\tMean Reward: {mean_reward}")
 
-                        return total_rewards
-                    else:
-                        break
+                    break
 
         self.model.save_actor(self.path_actor)
         self.model.save_critic(self.path_critic)
@@ -144,7 +140,7 @@ class Agent:
         plt.plot(x, slope * x + intercept, color="r", linestyle="-.")
         plt.xlabel("Episode")
         plt.ylabel("Reward")
-        plt.title("Tabular Q-Learning")
+        plt.title("A2C-Learning")
         plt.savefig(self.path_plot)
 
 
@@ -162,12 +158,10 @@ if __name__ == "__main__":
 
     PLAY = False
     REPORT_INTERVAL = 100
-    MEAN_BOUND = 5
     EPISODES_TRAIN = 10000
     EPISODES_PLAY = 5
 
     env = gym.make("CartPole-v1")
-
     agent = Agent(env,
                 alpha=ALPHA,
                 gamma = GAMMA,
@@ -178,7 +172,8 @@ if __name__ == "__main__":
                 lr_critic=LR_CRITIC)
     
     if not PLAY:
-        total_rewards = agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL, mean_bound=MEAN_BOUND)
+        total_rewards = agent.train(num_episodes=EPISODES_TRAIN,
+                                    report_interval=REPORT_INTERVAL)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)

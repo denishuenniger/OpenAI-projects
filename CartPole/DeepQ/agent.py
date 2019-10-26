@@ -60,7 +60,7 @@ class Agent:
             self.epsilon = self.epsilon_min
 
     
-    def train(self, num_episodes, report_interval, mean_bound):
+    def train(self, num_episodes, report_interval):
         try:
             self.model.load(self.path_model)
         except:
@@ -90,14 +90,12 @@ class Agent:
                 if done:
                     total_reward += 100.0
                     total_rewards.append(total_reward)
-                    mean_total_rewards = np.mean(total_rewards[-mean_bound:])
+                    mean_reward = np.mean(total_rewards)
 
                     if (episode + 1) % report_interval == 0:
-                        print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
-
-                    if mean_total_rewards > 495.0:
-                        self.model.save(self.path_model)
-                        return total_rewards
+                        print(f"Episode: {episode + 1}/{num_episodes}"
+                        f"\tReward: {total_reward}"
+                        f"\tMean Reward: {mean_reward}")
 
                     self.target_model.update(self.model)
                     break
@@ -167,7 +165,7 @@ class Agent:
         plt.plot(x, slope * x + intercept, color="r", linestyle="-.")
         plt.xlabel("Episode")
         plt.ylabel("Reward")
-        plt.title("Tabular Q-Learning")
+        plt.title("DQN-Learning")
         plt.savefig(self.path_plot)
 
 
@@ -187,13 +185,11 @@ if __name__ == "__main__":
 
     PLAY = False
     REPORT_INTERVAL = 100
-    MEAN_BOUND = 5
     EPISODES_TRAIN = 100000
     EPISODES_PLAY = 5
 
 
     env = gym.make("CartPole-v1")
-
     agent = Agent(env, 
                 replay_buffer_size=REPLAY_BUFFER_SIZE,
                 train_start=TRAIN_START,
@@ -206,7 +202,8 @@ if __name__ == "__main__":
                 learning_rate=LEARNING_RATE)
     
     if not PLAY:
-        total_rewards = agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL, mean_bound=MEAN_BOUND)
+        total_rewards = agent.train(num_episodes=EPISODES_TRAIN,
+                                    report_interval=REPORT_INTERVAL)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)
