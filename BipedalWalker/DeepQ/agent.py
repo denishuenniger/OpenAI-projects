@@ -60,7 +60,7 @@ class Agent:
             self.epsilon = self.epsilon_min
 
     
-    def train(self, num_episodes, report_interval, mean_bound):
+    def train(self, num_episodes, report_interval):
         try:
             self.model.load(self.path_model)
         except:
@@ -90,16 +90,11 @@ class Agent:
                 if done:
                     total_reward += 100.0
                     total_rewards.append(total_reward)
-                    mean_total_rewards = np.mean(total_rewards[-mean_bound:])
 
                     if (episode + 1) % report_interval == 0:
                         print(f"Episode: {episode + 1}/{num_episodes}"
                             f"\tTotal Reward: {total_reward}"
                             f"\tMean Total Rewards: {mean_total_rewards}")
-
-                    if mean_total_rewards > 495.0:
-                        self.model.save(self.path_model)
-                        return total_rewards
 
                     self.target_model.update(self.model)
                     break
@@ -189,7 +184,6 @@ if __name__ == "__main__":
 
     PLAY = False
     REPORT_INTERVAL = 100
-    MEAN_BOUND = 5
     EPISODES_TRAIN = 100000
     EPISODES_PLAY = 5
 
@@ -208,8 +202,7 @@ if __name__ == "__main__":
     
     if not PLAY:
         total_rewards = agent.train(num_episodes=EPISODES_TRAIN,
-                                    report_interval=REPORT_INTERVAL,
-                                    mean_bound=MEAN_BOUND)
+                                    report_interval=REPORT_INTERVAL)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)
