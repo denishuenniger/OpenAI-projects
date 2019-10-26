@@ -2,7 +2,9 @@ import gym
 import os
 import random
 import numpy as np
+import matplotlib.pyplot as plt
 
+from scipy.stats import linregress
 from collections import deque
 from model import DQN
 
@@ -10,11 +12,12 @@ from model import DQN
 class Agent:
 
     def __init__(self, env, replay_buffer_size, train_start,
-                    alpha, gamma, batch_size, learning_rate):
+                    alpha, gamma, epsilon, epsilon_min, epsilon_decay,
+                    batch_size, learning_rate):
         # Environment variables
         self.env = env
         self.num_states = self.env.observation_space.shape[0]
-        self.num_actions = self.env.action_space.n
+        self.num_actions = self.env.action_space.shape[0]
 
         # Agent variables
         self.replay_buffer_size = replay_buffer_size
@@ -22,6 +25,9 @@ class Agent:
         self.buffer = deque(maxlen=self.replay_buffer_size)
         self.alpha = alpha
         self.gamma = gamma
+        self.epsilon = epsilon
+        self.epsilon_min = epsilon_min
+        self.epsilon_decay = epsilon_decay
         
         #DQN variables
         self.learning_rate = learning_rate
@@ -37,13 +43,24 @@ class Agent:
 
 
     def get_action(self, state):
-        policy = self.model.predict(state)[0]
-        action = np.random.choice(self.num_actions, p=policy)
+        if np.random.random() < self.epsilon:
+            action = self.env.action_space.sample()
+        else:
+            action = np.argmax(self.model.predict(state))
 
         return action
 
 
-    def train(self, num_episodes, report_interval):
+    def reduce_epsilon(self):
+        epsilon = self.epsilon * self.epsilon_decay
+
+        if epsilon >= self.epsilon_min:
+            self.epsilon = epsilon
+        else:
+            self.epsilon = self.epsilon_min
+
+    
+    def train(self, num_episodes, report_interval, mean_bound):
         try:
             self.model.load(self.path_model)
         except:
@@ -65,6 +82,7 @@ class Agent:
 
                 self.remember(state, action, reward, next_state, done)
                 self.replay()
+                self.reduce_epsilon()
 
                 state = next_state
                 total_reward += reward
@@ -72,14 +90,14 @@ class Agent:
                 if done:
                     total_reward += 100.0
                     total_rewards.append(total_reward)
-                    mean_total_rewards = np.mean(total_rewards[-10:])
+                    mean_total_rewards = np.mean(total_rewards[-mean_bound:])
+
+                    if (episode + 1) % report_interval == 0:
+                        print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
 
                     if mean_total_rewards > 495.0:
                         self.model.save(self.path_model)
                         return total_rewards
-
-                    if (episode + 1) % report_interval == 0:
-                        print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
 
                     self.target_model.update(self.model)
                     break
@@ -140,42 +158,55 @@ class Agent:
 
 
     def plot_rewards(self, total_rewards):
-        plt.plot(range(len(total_rewards)), total_rewards, linewidth=0.8)
+        x = range(len(total_rewards))
+        y = total_rewards
+
+        slope, intercept, _, _, _ = linregress(x, y)
+        
+        plt.plot(x, y, linewidth=0.8)
+        plt.plot(x, slope * x + intercept, color="r", linestyle="-.")
         plt.xlabel("Episode")
         plt.ylabel("Reward")
-        plt.title("DQN - Learning")
+        plt.title("Tabular Q-Learning")
         plt.savefig(self.path_plot)
 
 
-
+# Main program
 if __name__ == "__main__":
 
     # Hyperparameters
     REPLAY_BUFFER_SIZE = 500000
     TRAIN_START = 1000
-    GAMMA = 0.95
     ALPHA = 0.2
-    BATCH_SIZE = 128
-    LEARNING_RATE = 1e-4
+    GAMMA = 0.9
+    EPSILON = 0.1
+    EPSILON_MIN = 0.01
+    EPSILON_DECAY = 0.98
+    BATCH_SIZE = 32
+    LEARNING_RATE = 1e-3
 
     PLAY = False
     REPORT_INTERVAL = 100
+    MEAN_BOUND = 5
     EPISODES_TRAIN = 100000
     EPISODES_PLAY = 5
 
 
     env = gym.make("CartPole-v1")
+
     agent = Agent(env, 
                 replay_buffer_size=REPLAY_BUFFER_SIZE,
                 train_start=TRAIN_START,
-                gamma=GAMMA,
                 alpha=ALPHA,
+                gamma=GAMMA,
+                epsilon=EPSILON,
+                epsilon_min=EPSILON_MIN,
+                epsilon_decay=EPSILON_DECAY,
                 batch_size=BATCH_SIZE,
                 learning_rate=LEARNING_RATE)
     
     if not PLAY:
-        total_rewards = agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL)
+        total_rewards = agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL, mean_bound=MEAN_BOUND)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)
-

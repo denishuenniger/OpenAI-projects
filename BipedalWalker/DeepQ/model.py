@@ -12,12 +12,11 @@ class DQN(Model):
         self.lr = lr
 
         state = Input(shape=(num_states,))
-        x = Dense(32, activation="relu")(state)
-        x = Dense(32, activation="relu")(x)
-        action = Dense(num_actions, activation="softmax")(x)
+        x = Dense(64, activation="relu")(state)
+        action = Dense(num_actions)(x)
         self.model = Model(inputs=state, outputs=action)
         self.model.summary()
-        self.model.compile(loss="categorical_crossentropy", optimizer=RMSprop(learning_rate=self.lr))
+        self.model.compile(loss="mse", optimizer=Adam(learning_rate=self.lr))
 
 
     def fit(self, states, q_values):

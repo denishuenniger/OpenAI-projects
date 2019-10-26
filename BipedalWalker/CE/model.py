@@ -13,12 +13,12 @@ class DNN(Model):
         self.lr = lr
 
         state = Input(shape=(self.num_states,))
-        x = Dense(32, activation="relu")(state)
-        action = Dense(self.num_actions, activation="softmax")(x)
+        x = Dense(64, activation="relu")(state)
+        action = Dense(self.num_actions)(x)
 
         self.model = Model(inputs=state, outputs=action)
         self.model.summary()
-        self.model.compile(loss="categorical_crossentropy", optimizer=Adam(learning_rate=self.lr))
+        self.model.compile(loss="mse", optimizer=Adam(learning_rate=self.lr))
 
 
     def fit(self, state, action):
