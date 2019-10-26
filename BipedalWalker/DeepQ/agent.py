@@ -46,7 +46,7 @@ class Agent:
         if np.random.random() < self.epsilon:
             action = self.env.action_space.sample()
         else:
-            action = np.argmax(self.model.predict(state))
+            action = self.model.predict(state)[0]
 
         return action
 
@@ -70,13 +70,13 @@ class Agent:
 
         for episode in range(num_episodes):
             state = self.env.reset()
-            state = state.reshape((1, self.num_states))
+            state = state.reshape(1, self.num_states)
             total_reward = 0.0
 
             while True:
                 action = self.get_action(state)
                 next_state, reward, done, _ = self.env.step(action)
-                next_state = next_state.reshape((1, self.num_states))
+                next_state = next_state.reshape(1, self.num_states)
 
                 if done and reward != 500.0: reward = -100.0
 
@@ -123,7 +123,6 @@ class Agent:
         next_q_values = self.target_model.predict(next_states)
 
         for i in range(self.batch_size):
-            action = actions[i]
             done = dones[i]
 
             if done:
@@ -131,7 +130,7 @@ class Agent:
             else:
                 q_target = rewards[i] + self.gamma * np.max(next_q_values[i])
 
-            q_values[i][action] = (1 - self.alpha) * q_values[i][action] + self.alpha * q_target
+            q_values[i] = (1 - self.alpha) * q_values[i] + self.alpha * q_target
 
         self.model.fit(states, q_values)
 
@@ -192,8 +191,7 @@ if __name__ == "__main__":
     EPISODES_PLAY = 5
 
 
-    env = gym.make("CartPole-v1")
-
+    env = gym.make("BipedalWalker-v2")
     agent = Agent(env, 
                 replay_buffer_size=REPLAY_BUFFER_SIZE,
                 train_start=TRAIN_START,
@@ -206,7 +204,9 @@ if __name__ == "__main__":
                 learning_rate=LEARNING_RATE)
     
     if not PLAY:
-        total_rewards = agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL, mean_bound=MEAN_BOUND)
+        total_rewards = agent.train(num_episodes=EPISODES_TRAIN,
+                                    report_interval=REPORT_INTERVAL,
+                                    mean_bound=MEAN_BOUND)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)
