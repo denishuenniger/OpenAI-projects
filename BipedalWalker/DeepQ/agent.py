@@ -93,7 +93,9 @@ class Agent:
                     mean_total_rewards = np.mean(total_rewards[-mean_bound:])
 
                     if (episode + 1) % report_interval == 0:
-                        print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
+                        print(f"Episode: {episode + 1}/{num_episodes}"
+                            f"\tTotal Reward: {total_reward}"
+                            f"\tMean Total Rewards: {mean_total_rewards}")
 
                     if mean_total_rewards > 495.0:
                         self.model.save(self.path_model)
@@ -152,7 +154,8 @@ class Agent:
                 total_reward += reward
 
                 if done:
-                    print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward}")
+                    print(f"Episode: {episode + 1}/{num_episodes}"
+                        f"\tTotal Reward: {total_reward}")
                     break
 
 
