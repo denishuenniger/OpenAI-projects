@@ -1,6 +1,6 @@
-from keras.layers import Input, Dense
 from keras.models import Model, Sequential
-from keras.optimizers import Adam, RMSprop
+from keras.layers import Input, Dense, Activation
+from keras.optimizers import Adam
 
 
 class DNN(Model):
@@ -14,15 +14,18 @@ class DNN(Model):
         self.lr_critic = lr_critic
         
         state = Input(shape=(num_states,))
-        x = Dense(64, activation="relu")(state)
+        x = Dense(32)(state)
+        x = Activation("relu")(x)
 
-        actor_x = Dense(32, activation="relu")(x)
+        actor_x = Dense(16)(x)
+        actor_x = Activation("relu")(actor_x)
         actor_out = Dense(self.num_actions)(actor_x)
         self.actor = Model(inputs=state, outputs=actor_out)
         self.actor.summary()
         self.actor.compile(loss="mse", optimizer=Adam(lr=self.lr_actor))
 
-        critic_x = Dense(32, activation="relu")(x)
+        critic_x = Dense(16)(x)
+        critic_x = Activation("relu")(critic_x)
         critic_out = Dense(1)(critic_x)
         self.critic = Model(inputs=state, outputs=critic_out)
         self.critic.summary()

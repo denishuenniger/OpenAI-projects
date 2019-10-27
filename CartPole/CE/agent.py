@@ -24,14 +24,16 @@ class Agent:
         Constructor of the Agent class.
         """
 
-        # Hyperparamters
-        self.p = p * 100
-        self.lr = lr
-
-        # Agent variables
+        # Environment variables
         self.env = env
         self.num_states = self.env.observation_space.shape[0]
         self.num_actions = self.env.action_space.n
+
+        # Agent variables
+        self.p = p * 100
+
+        # DQN variables
+        self.lr = lr
         self.model = DNN(self.num_states, self.num_actions, self.lr)
 
         # File paths
@@ -125,13 +127,20 @@ class Agent:
         for epoch in range(num_epochs):
             rewards, episodes = self.sample(num_episodes)
             x_train, y_train, reward_bound = self.get_training_data(episodes, rewards)
+
             mean_reward = np.mean(rewards)
             total_rewards.extend(rewards)
+            mean_total_reward = np.mean(total_rewards[-5:])
             
             if (epoch + 1) % report_interval == 0:
-                print(f"Epoch: {epoch + 1}/{num_epochs}"
-                    f"\tMean Reward: {mean_reward}"
-                    f"\tReward Bound: {reward_bound}")
+                print(
+                    f"Epoch: {epoch + 1}/{num_epochs}"
+                    f"\tMean Reward: {mean_reward : .2f}"
+                    f"\tReward Bound: {reward_bound : .2f}")
+
+            if mean_total_reward > 495.0:
+                self.model.save(self.path_model)
+                return total_rewards
             
             self.model.fit(x_train, y_train)
 
@@ -158,7 +167,9 @@ class Agent:
                 total_reward += reward
 
                 if done:
-                    print(f"Episode: {episode + 1}/{num_episodes} \tReward: {total_reward}")
+                    print(
+                        f"Episode: {episode + 1}/{num_episodes}"
+                        f"\tReward: {total_reward : .2f}")
                     break
 
 
@@ -172,7 +183,7 @@ class Agent:
         plt.plot(x, slope * x + intercept, color="r", linestyle="-.")
         plt.xlabel("Episode")
         plt.ylabel("Reward")
-        plt.title("Tabular Q-Learning")
+        plt.title("CE-Learning")
         plt.savefig(self.path_plot)
 
 
@@ -180,8 +191,8 @@ class Agent:
 if __name__ == "__main__":
     
     # Hyperparameters
-    PERCENTILE = 0.75
-    LEARNING_RATE = 1e-3
+    PERCENTILE = 0.8
+    LEARNING_RATE = 0.001
 
     PLAY = False
     REPORT_INTERVAL = 10
@@ -190,14 +201,16 @@ if __name__ == "__main__":
     EPISODES_PLAY = 5
 
     env = gym.make("CartPole-v1")
-    agent = Agent(env,
-                p=PERCENTILE,
-                lr=LEARNING_RATE)
+    agent = Agent(
+        env=env,
+        p=PERCENTILE,
+        lr=LEARNING_RATE)
     
     if not PLAY:
-        total_rewards = agent.train(num_epochs=EPOCHS_TRAIN,
-                                    num_episodes=EPISODES_TRAIN,
-                                    report_interval=REPORT_INTERVAL)
+        total_rewards = agent.train(
+            num_epochs=EPOCHS_TRAIN,
+            num_episodes=EPISODES_TRAIN,
+            report_interval=REPORT_INTERVAL)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)

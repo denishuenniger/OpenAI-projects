@@ -1,5 +1,5 @@
 from keras.models import Model, Sequential, Input
-from keras.layers import Dense
+from keras.layers import Dense, Activation
 from keras.optimizers import Adam
 
 
@@ -13,7 +13,8 @@ class DNN(Model):
         self.learning_rate = learning_rate
 
         state = Input(shape=(self.num_states,))
-        x = Dense(64, activation="relu")(state)
+        x = Dense(512)(state)
+        x = Activation("relu")(x)
         action = Dense(self.num_actions)(x)
 
         self.model = Model(inputs=state, outputs=action)

@@ -1,25 +1,34 @@
 import gym
 import os
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 
 from scipy.stats import linregress
 from model import DNN
+from buffer import ReplayBuffer
 
 
 class Agent:
 
-    def __init__(self, env, alpha, gamma,
-                epsilon, epsilon_min, epsilon_decay,
-                lr_actor, lr_critic):
+    def __init__(self, env, buffer_size,
+                alpha, gamma, epsilon, epsilon_min, epsilon_decay,
+                batch_size, lr_actor, lr_critic):
+        # Environment variables
         self.env = env
         self.num_states = self.env.observation_space.shape[0]
         self.num_actions = self.env.action_space.shape[0]
+
+        # Agent variables
+        self.buffer = ReplayBuffer(buffer_size)
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
+
+        # DQN variables
+        self.batch_size = batch_size
         self.lr_actor = lr_actor
         self.lr_critic = lr_critic
         self.model = DNN(self.num_states, self.num_actions, self.lr_actor, self.lr_critic)
@@ -44,30 +53,38 @@ class Agent:
         if np.random.random() < self.epsilon:
             action = self.env.action_space.sample()
         else:
-            action = np.argmax(self.model.predict_actor(state))
+            action = self.model.predict_actor(state)[0]
 
         return action
+    
 
+    def replay(self):
+        sample_size = min(len(self.buffer), self.batch_size)
+        minibatch = random.sample(self.buffer.buffer, sample_size)
+        states, actions, rewards, next_states, dones = zip(*minibatch)
 
-    def update_policy(self, state, action, reward, next_state, done):
-        values = np.zeros((1, 1))
-        advantages = np.zeros((1, self.num_actions))
-        
-        value = self.model.predict_critic(state)[0]
-        next_value = self.model.predict_critic(next_state)[0]
+        states = np.concatenate(states)
+        next_states = np.concatenate(next_states)
 
-        if done:
-            advantages[0][action] = reward - value
-            values[0][0] = reward
-        else:
-            advantages[0][action] = (reward + self.gamma * next_value) - value
-            values[0][0] = reward + self.gamma * next_value
+        values = np.zeros((sample_size, 1))
+        advantages = np.zeros((sample_size, self.num_actions))
 
-        self.model.fit_actor(state, advantages)
-        self.model.fit_critic(state, values)
+        q_values = self.model.predict_critic(states)
+        next_q_values = self.model.predict_critic(next_states)
+
+        for i in range(sample_size):
+            if dones[i]:
+                advantages[i] = rewards[i] - q_values[i]
+                values[i] = rewards[i]
+            else:
+                advantages[i] = (rewards[i] + self.gamma * next_q_values[i]) - q_values[i]
+                values[i] = rewards[i] + self.gamma * next_q_values[i]
+
+        self.model.fit_actor(states, advantages)
+        self.model.fit_critic(states, values)
     
     
-    def train(self, num_episodes, report_interval, mean_bound):
+    def train(self, num_episodes, report_interval):
         try:
             self.model.load_actor(self.path_actor)
             self.model.load_critic(self.path_critic)
@@ -86,29 +103,23 @@ class Agent:
                 next_state, reward, done, _ = self.env.step(action)
                 next_state = next_state.reshape(1, self.num_states)
 
-                if done and reward != 500.0: reward = -100.0
-
-                self.update_policy(state, action, reward, next_state, done)
+                self.buffer.remember(state, action, reward, next_state, done)
+                self.replay()
                 self.reduce_epsilon()
 
                 total_reward += reward
                 state = next_state
 
                 if done:
-                    total_reward += 100.0
                     total_rewards.append(total_reward)
-                    mean_total_rewards = np.mean(total_rewards[-mean_bound:])
+                    mean_reward = np.mean(total_reward)
                     
                     if (episode + 1) % report_interval == 0:
-                        print(f"Episode: {episode + 1}/{num_episodes} \tTotal Reward: {total_reward} \tMean Total Rewards: {mean_total_rewards}")
-                    
-                    if mean_total_rewards >= 495.0:
-                        self.model.save_actor(self.path_actor)
-                        self.model.save_critic(self.path_critic)
+                        print(f"Episode: {episode + 1}/{num_episodes}"
+                            f"\tReward: {total_reward : .2f}"
+                            f"\tMean Reward: {mean_reward : .2f}")
 
-                        return total_rewards
-                    else:
-                        break
+                    break
 
         self.model.save_actor(self.path_actor)
         self.model.save_critic(self.path_critic)
@@ -144,7 +155,7 @@ class Agent:
         plt.plot(x, slope * x + intercept, color="r", linestyle="-.")
         plt.xlabel("Episode")
         plt.ylabel("Reward")
-        plt.title("Tabular Q-Learning")
+        plt.title("A2C-Learning")
         plt.savefig(self.path_plot)
 
 
@@ -152,34 +163,36 @@ class Agent:
 if __name__ == "__main__":
 
     # Hyperparameters
+    BUFFER_SIZE = 1000000
     ALPHA = 0.2
-    GAMMA = 0.98
+    GAMMA = 0.95
     EPSILON = 0.1
     EPSILON_MIN = 0.01
-    EPSILON_DECAY = 0.99
-    LR_ACTOR = 1e-3
-    LR_CRITIC = 5e-3
+    EPSILON_DECAY = 0.98
+    BATCH_SIZE = 128
+    LR_ACTOR = 0.0001
+    LR_CRITIC = 0.001
 
     PLAY = False
     REPORT_INTERVAL = 100
-    MEAN_BOUND = 5
     EPISODES_TRAIN = 10000
     EPISODES_PLAY = 5
 
     env = gym.make("BipedalWalker-v2")
     agent = Agent(env,
+                buffer_size=BUFFER_SIZE,
                 alpha=ALPHA,
                 gamma = GAMMA,
                 epsilon=EPSILON,
                 epsilon_min=EPSILON_MIN,
                 epsilon_decay=EPSILON_DECAY,
+                batch_size=BATCH_SIZE,
                 lr_actor=LR_ACTOR,
                 lr_critic=LR_CRITIC)
     
     if not PLAY:
         total_rewards = agent.train(num_episodes=EPISODES_TRAIN,
-                                    report_interval=REPORT_INTERVAL,
-                                    mean_bound=MEAN_BOUND)
+                                    report_interval=REPORT_INTERVAL)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)

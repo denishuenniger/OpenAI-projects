@@ -18,9 +18,10 @@ class Agent:
         model         = Neural Network model
     """
 
-    def __init__(self, env,
-                p, epsilon, epsilon_min, epsilon_decay,
-                learning_rate):
+    def __init__(
+        self, env,
+        p, epsilon, epsilon_min, epsilon_decay,
+        learning_rate):
         """
         Constructor of the Agent class.
         """
@@ -142,9 +143,10 @@ class Agent:
             total_rewards.extend(rewards)
             
             if (epoch + 1) % report_interval == 0:
-                print(f"Epoch: {epoch + 1}/{num_epochs}"
-                    f"\tMean Reward: {mean_reward}"
-                    f"\tReward Bound: {reward_bound}")
+                print(
+                    f"Epoch: {epoch + 1}/{num_epochs}"
+                    f"\tMean Reward: {mean_reward : .2f}"
+                    f"\tReward Bound: {reward_bound : .2f}")
             
             self.model.fit(x_train, y_train)
 
@@ -171,7 +173,9 @@ class Agent:
                 total_reward += reward
 
                 if done:
-                    print(f"Episode: {episode + 1}/{num_episodes} \tReward: {total_reward}")
+                    print(
+                        f"Episode: {episode + 1}/{num_episodes}"
+                        f"\tReward: {total_reward : .2f}")
                     break
 
 
@@ -193,11 +197,11 @@ class Agent:
 if __name__ == "__main__":
     
     # Hyperparameters
-    PERCENTILE = 0.75
+    PERCENTILE = 0.8
     EPSILON = 0.1
     EPSILON_MIN = 0.01
-    EPSILON_DECAY = 0.99
-    LEARNING_RATE = 1e-3
+    EPSILON_DECAY = 0.98
+    LEARNING_RATE = 0.001
 
     PLAY = False
     REPORT_INTERVAL = 10
@@ -207,17 +211,19 @@ if __name__ == "__main__":
 
     env = gym.make("BipedalWalker-v2")
 
-    agent = Agent(env,
-                p=PERCENTILE,
-                epsilon=EPSILON,
-                epsilon_min=EPSILON_MIN,
-                epsilon_decay=EPSILON_DECAY,
-                learning_rate=LEARNING_RATE)
+    agent = Agent(
+        env=env,
+        p=PERCENTILE,
+        epsilon=EPSILON,
+        epsilon_min=EPSILON_MIN,
+        epsilon_decay=EPSILON_DECAY,
+        learning_rate=LEARNING_RATE)
     
     if not PLAY:
-        total_rewards = agent.train(num_epochs=EPOCHS_TRAIN,
-                                    num_episodes=EPISODES_TRAIN,
-                                    report_interval=REPORT_INTERVAL)
+        total_rewards = agent.train(
+            num_epochs=EPOCHS_TRAIN,
+            num_episodes=EPISODES_TRAIN,
+            report_interval=REPORT_INTERVAL)
         agent.plot_rewards(total_rewards)
     else:
         agent.play(num_episodes=EPISODES_PLAY)
