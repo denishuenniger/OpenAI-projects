@@ -5,7 +5,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from scipy.stats import linregress
-from collections import deque
 from model import DQN
 from buffer import ReplayBuffer
 
@@ -13,16 +12,17 @@ from buffer import ReplayBuffer
 class Agent:
 
     def __init__(
-        self, env, buffer_size,
-        alpha, gamma, epsilon, epsilon_min, epsilon_decay,
-        batch_size, learning_rate):
+        self, env, buffer_size, batch_size,
+        alpha, gamma, epsilon, epsilon_min, epsilon_decay, learning_rate):
         # Environment variables
         self.env = env
         self.num_states = self.env.observation_space.shape[0]
         self.num_actions = self.env.action_space.shape[0]
 
         # Agent variables
-        self.buffer = ReplayBuffer(buffer_size)
+        self.buffer_size = buffer_size
+        self.batch_size = batch_size
+        self.buffer = ReplayBuffer(self.buffer_size, self.batch_size)
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
@@ -31,7 +31,6 @@ class Agent:
         
         #DQN variables
         self.learning_rate = learning_rate
-        self.batch_size = batch_size
         self.model = DQN(self.num_states, self.num_actions, self.learning_rate)
         self.target_model = DQN(self.num_states, self.num_actions, self.learning_rate)
         self.target_model.update(self.model)
@@ -61,12 +60,8 @@ class Agent:
 
 
     def replay(self):
-        sample_size = min(len(self.buffer), self.batch_size)
-        minibatch = random.sample(self.buffer.buffer, sample_size)
-        states, actions, rewards, next_states, dones = zip(*minibatch)
-
-        states = np.concatenate(states)
-        next_states = np.concatenate(next_states)
+        sample_size = min(len(self.buffer.memory), self.batch_size)
+        states, actions, rewards, next_states, dones = self.buffer.sample()
 
         q_values = self.model.predict(states)
         next_q_values = self.target_model.predict(next_states)
@@ -166,13 +161,13 @@ if __name__ == "__main__":
 
     # Hyperparameters
     BUFFER_SIZE = 1000000
-    ALPHA = 0.2
+    ALPHA = 0.1
     GAMMA = 0.95
     EPSILON = 0.1
     EPSILON_MIN = 0.01
     EPSILON_DECAY = 0.98
     BATCH_SIZE = 128
-    LEARNING_RATE = 0.0001
+    LEARNING_RATE = 0.001
 
     PLAY = False
     REPORT_INTERVAL = 100
