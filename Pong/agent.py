@@ -11,10 +11,33 @@ from wrapper import *
 
  
 class Agent:
-
+    """
+    Class representing a learning agent acting on an environment.
+    """
+    
     def __init__(self,
         buffer_size, batch_size, alpha, gamma, epsilon, epsilon_min, epsilon_decay, lr,
-        game="PongDeterministic-v4", num_actions=4, img_shape=(84, 84, 4), no_ops_steps=30, mean_bound=5, reward_bound=15.0, sync_model=1000, save_model=10):
+        game="PongDeterministic-v4", num_actions=4, img_shape=(84,84,4), no_ops_steps=30, mean_bound=5, reward_bound=15.0, sync_model=1000, save_model=10):  
+        """
+        Constructor of the agent class.
+            - game="PongDeterministic-v4" : Name of the game environment
+            - num_actions=4 : Number of actions available for the agent
+            - img_shape=(84,84,4) : Shape of states (84x84 images with 4 frame buffer)
+            - no_ops_steps=30 : Number of maximal steps the agent is making no operation
+            - mean_bound=5 : Number of last acquired rewards considered for mean reward
+            - reward_bound=15.0 : Reward acquired for completing an episode properly
+            - sync_model=1000 : Interval for synchronizing model and target model
+            - save_model=10 : Interval for saving the model
+
+            - buffer_size : Replay buffer size of the model
+            - batch_size : Batch size of the model
+            - alpha : Learning rate for Q-Learning
+            - epsilon : Parameter for the Epsilon-Greedy algorithm
+            - epsilon_min : Minimal value for epsilon
+            - epsilon_decay : Decay rate for epsilon
+            - lr : Learning rate for the DQN
+        """
+
         # Environment variables
         self.game = game
         self.env = make_env(self.game)
@@ -56,6 +79,10 @@ class Agent:
 
     
     def reduce_epsilon(self):
+        """
+        Reduces the parameter epsilon up to a given minimal value where the speed of decay is controlled by some given parameter.
+        """
+
         epsilon = self.epsilon * self.epsilon_decay
 
         if epsilon > self.epsilon_min:
@@ -65,6 +92,12 @@ class Agent:
     
     
     def get_action(self, state):
+        """
+        Returns an action for a given state, based on the current policy.
+
+            - state : Current state of the agent
+        """
+
         if np.random.random() < self.epsilon:
             action = np.random.randint(self.num_actions)
         else:
@@ -74,6 +107,13 @@ class Agent:
 
 
     def train(self, num_episodes, report_interval):
+        """
+        Trains the DQN model for a given number of episodes. Outputting report information is controlled by a given time interval.
+
+            - num_episodes : Number of episodes to train
+            - report_interval : Interval for outputting report information of training
+        """
+
         step = 0
         total_rewards = []
 
@@ -133,6 +173,10 @@ class Agent:
 
 
     def replay(self):
+        """
+        Samples training data from the replay buffer and fits the DQN model.
+        """
+
         sample_size, states, actions, rewards, next_states, dones = self.memory.sample()
 
         q_values = self.model.predict(states)
@@ -153,6 +197,12 @@ class Agent:
 
 
     def play(self, num_episodes):
+        """
+        Renders the trained agent for a given number of episodes.
+
+            - num_episodes : Number of episodes to render
+        """
+
         for episode in range(1, num_episodes + 1):
             state = self.env.reset()
             state = np.concatenate((state, state, state, state), axis=3)
@@ -174,6 +224,12 @@ class Agent:
 
 
     def plot_rewards(self, total_rewards):
+        """
+        Plots the rewards the agent has acquired during training.
+
+            - total_rewards : Rewards the agent has gained per episode
+        """
+
         x = range(len(total_rewards))
         y = total_rewards
         slope, intercept, _, _, _ = linregress(x, y)
@@ -186,7 +242,6 @@ class Agent:
         plt.savefig(self.path_plot)
 
 
-# Main program
 if __name__ == "__main__":
 
     # Choose whether to play or to train
