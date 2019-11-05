@@ -184,6 +184,7 @@ class Agent:
         plt.ylabel("Reward")
         plt.title("DQN-Learning")
         plt.savefig(self.path_plot)
+        plt.close()
 
 
 # Main program
@@ -193,7 +194,7 @@ if __name__ == "__main__":
     PLAY = True
     EPISODES_TRAIN = 10000
     EPISODES_PLAY = 15
-    REPORT_INTERVAL = 10
+    REPORT_INTERVAL = 1
 
     # Hyperparameters
     ALPHA = 0.1
