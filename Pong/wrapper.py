@@ -6,21 +6,36 @@ import numpy as np
 from collections import deque
  
 
-class FireResetEnv(gym.Wrapper):
+class FireResetWrapper(gym.Wrapper):
+    """
+    Class representing a wrapper for environments where the user needs to press FIRE for starting the game.
+    """
     
     def __init__(self, env=None):
-        """For environments where the user needs to press FIRE for starting the game."""
+        """
+        Constructor for the fire-reset wrapper.
+
+            - env=None : Current environment
+        """
         
-        super(FireResetEnv, self).__init__(env)
-        assert env.unwrapped.get_action_meanings()[1] == 'FIRE'
-        assert len(env.unwrapped.get_action_meanings()) >= 3
+        super(FireResetWrapper, self).__init__(env)
 
 
     def step(self, action):
+        """
+        Takes an action in the current environment.
+
+            - action : Action of the agent to take in the environment
+        """
+
         return self.env.step(action)
 
 
     def reset(self):
+        """
+        Resets the current environment.
+        """
+
         self.env.reset()
         state, _, done, _ = self.env.step(1)
 
@@ -33,12 +48,20 @@ class FireResetEnv(gym.Wrapper):
         return state
 
 
-class MaxAndSkipEnv(gym.Wrapper):
+class MaxSkipWrapper(gym.Wrapper):
+    """
+    Class representing a wrapper for environments where input frames needs to be skippable and further selectable.
+    """
     
     def __init__(self, env=None, skip_frame=4):
-        """Returns only every 4-th frame."""
+        """
+        Constructor for the max-and-skip wrapper.
+
+            - env=None : Current environment
+            - skip_frame=4 : Number of how many frames should be skipped
+        """
         
-        super(MaxAndSkipEnv, self).__init__(env)
+        super(MaxSkipWrapper, self).__init__(env)
         
         # Most recent raw observations (for Max-Pooling across time steps)
         self.frame_buffer = deque(maxlen=2)
@@ -46,8 +69,13 @@ class MaxAndSkipEnv(gym.Wrapper):
 
     
     def step(self, action):
+        """
+        Takes an action in the current environment.
+
+            - action : Action of the agent to take in the environment
+        """
+
         total_reward = 0.0
-        done = None
         
         for _ in range(self.skip_frame):
             state, reward, done, info = self.env.step(action)
@@ -57,11 +85,14 @@ class MaxAndSkipEnv(gym.Wrapper):
             if done: break
         
         max_frame = np.max(np.stack(self.frame_buffer), axis=0)
+
         return max_frame, total_reward, done, info
 
 
     def reset(self):
-        """Clears past frame buffer and initializes environment and buffer."""
+        """
+        Clears past frame buffer and initializes environment and buffer.
+        """
         
         self.frame_buffer.clear()
         state = self.env.reset()
@@ -70,19 +101,40 @@ class MaxAndSkipEnv(gym.Wrapper):
         return state
 
 
-class ProcessFrame(gym.ObservationWrapper):
+class ProcessFrameWrapper(gym.ObservationWrapper):
+    """
+    Class representing a wrapper for environments where the input states need to be further processed.
+    """
     
     def __init__(self, env=None):
-        super(ProcessFrame, self).__init__(env)
+        """
+        Constructor for the process-frame wrapper.
+
+            - env=None : Current environment
+        """
+
+        super(ProcessFrameWrapper, self).__init__(env)
         self.observation_space = gym.spaces.Box(low=0, high=255, shape=(84, 84, 1), dtype=np.uint8)
 
 
     def observation(self, state):
-        return ProcessFrame.process(state)
+        """
+        Returns the processed state of the agent.
+
+            - state : Current unprocessed state
+        """
+
+        return ProcessFrameWrapper.process(state)
 
 
     @staticmethod
     def process(frame):
+        """
+        Returns the processed frame.
+
+            - frame : Current unprocessed frame
+        """
+
         # Image size: 210 x 160 (RGB)
         if frame.size == 210 * 160 * 3:
             img = np.reshape(frame, [210, 160, 3]).astype(np.uint8)
@@ -90,7 +142,7 @@ class ProcessFrame(gym.ObservationWrapper):
         elif frame.size == 250 * 160 * 3:
             img = np.reshape(frame, [250, 160, 3]).astype(np.uint8)
         else:
-            assert False, "Unknown resolution."
+            assert False, "Unknown resolution!"
 
         # Adjust the image colors
         img = img[:, :, 0] * 0.299 + img[:, :, 1] * 0.587 + img[:, :, 2] * 0.114
@@ -102,10 +154,17 @@ class ProcessFrame(gym.ObservationWrapper):
 
         return scaled_img
 
+
 def make_env(game):
+    """
+    Creates an environment for the agent and, based on the implemented wrappers, adds functionality.
+
+        - game = Name of the environment to create
+    """
+
     env = gym.make(game)
-    env = MaxAndSkipEnv(env)
-    env = FireResetEnv(env)
-    env = ProcessFrame(env)
+    env = MaxSkipWrapper(env)
+    env = FireResetWrapper(env)
+    env = ProcessFrameWrapper(env)
 
     return env
