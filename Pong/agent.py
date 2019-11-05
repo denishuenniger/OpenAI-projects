@@ -158,6 +158,7 @@ class Agent:
             state = np.concatenate((state, state, state, state), axis=3)
             
             while True:
+                self.env.render()
                 action = self.get_action(state)
                 next_state, reward, done, _ = self.env.step(action)
 
@@ -166,8 +167,8 @@ class Agent:
 
                 if done:
                     print(
-                        f"Episode: {epsiode}/{num_episodes}"
-                        f"Reward: {reward}")
+                        f"Episode: {episode}/{num_episodes}"
+                        f"\tReward: {reward}")
                     
                     break
 
@@ -189,7 +190,7 @@ class Agent:
 if __name__ == "__main__":
 
     # Choose whether to play or to train
-    PLAY = False
+    PLAY = True
     EPISODES_TRAIN = 10000
     EPISODES_PLAY = 15
     REPORT_INTERVAL = 10
