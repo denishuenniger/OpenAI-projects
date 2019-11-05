@@ -190,7 +190,7 @@ if __name__ == "__main__":
 
     # Choose whether to play or to train
     PLAY = False
-    EPISODES_TRAIN = 1000
+    EPISODES_TRAIN = 10000
     EPISODES_PLAY = 15
     REPORT_INTERVAL = 10
 
