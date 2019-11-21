@@ -12,7 +12,6 @@ class ReplayBuffer:
     def __init__(self, buffer_size, batch_size):
         """
         Constructor of the replay buffer class.
-
             - buffer_size : Buffer size of the DQN model
             - batch_size : Batch size of the DQN model
         """
@@ -33,7 +32,6 @@ class ReplayBuffer:
     def remember(self, state, action, reward, next_state, done):
         """
         Adds a new element to the end of the replay buffer.
-
             - state : Current state of the agent
             - action : Action the agent decides to execute
             - reward : Reward the agent has gained for its chosen action

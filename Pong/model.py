@@ -14,7 +14,6 @@ class DQN(Model):
     def __init__(self, img_shape, num_actions, lr):
         """
         Constructor of the DQN class.
-
             - img_shape : Input shape of the states
             - num_actions : Number of available actions
         """
@@ -44,7 +43,6 @@ class DQN(Model):
     def fit(self, states, q_values):
         """
         Fits the DQN model based on the given states and correspoonding Q-values.
-
             - states : States of the agent
             - q_values : Q-values for available actions and given states
         """
@@ -55,7 +53,6 @@ class DQN(Model):
     def predict(self, state):
         """
         Predicts the q-values from the given states.
-
             - state : Current state of the agent
         """
 
@@ -65,7 +62,6 @@ class DQN(Model):
     def update(self, other_model):
         """
         Synchronizes the target model with the DQN model.
-
             - other_model : Current DQN model
         """
 
@@ -75,7 +71,6 @@ class DQN(Model):
     def load(self, path):
         """
         Loads a DQN model from the given path.
-
             - path : File path to the DQN model
         """
 
@@ -85,7 +80,6 @@ class DQN(Model):
     def save(self, path):
         """
         Saves the DQN model to a given path.
-
             - path : File path to the save location
         """
         

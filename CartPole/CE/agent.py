@@ -9,8 +9,22 @@ from model import DNN
 
 
 class Agent:
+    """
+    Class representing a learning agent acting in an environment.
+    """
 
     def __init__(self, p, lr, game="CartPole-v1", mean_bound=5, reward_bound=495.0, save_model=10):
+        """
+        Constructor of the agent class.
+            - game="CartPole-v1" : Name of the game environment
+            - mean_bound=5 : Number of last acquired rewards considered for mean reward
+            - reward_bound=495.0 : Reward acquired for completing an episode properly
+            - save_model=10 : Interval for saving the model
+
+            - p : Percentile for selecting training data
+            - lr : Learning rate for the CE model
+        """
+        
         # Environment variables
         self.game = game
         self.env = gym.make(self.game)
@@ -40,6 +54,11 @@ class Agent:
 
     
     def get_action(self, state):
+        """
+        Returns an action for a given state, based on the current policy.
+            - state : Current state of the agent
+        """
+
         state = state.reshape(1, -1)
         policy = self.model.predict(state)[0]
         action = np.random.choice(self.num_actions, p=policy)
@@ -48,6 +67,11 @@ class Agent:
 
     
     def sample(self, num_episodes):
+        """
+        Returns samples of state/action tuples for a given number of episodes.
+            - num_episodes : Number of episodes to sample
+        """
+
         episodes = [[] for _ in range(num_episodes)]
         rewards = [0.0 for _ in range(num_episodes)]
 
@@ -75,6 +99,12 @@ class Agent:
 
     
     def get_training_data(self, episodes, rewards):
+        """
+        Returns training data for the CE model.
+            - episodes : List of state/action tuples
+            - rewards : List of gained rewards
+        """
+
         x_train, y_train = [], []
         reward_bound = np.percentile(rewards, self.p)
 
@@ -92,6 +122,13 @@ class Agent:
 
 
     def train(self, num_epochs, num_episodes, report_interval):
+        """
+        Trains the CE model for a given number of epochs and episodes. Outputting report information is controlled by a given time interval.
+            - num_epochs : Number of epochs to train
+            - num_episodes : Number of episodes to train
+            - report_interval : Interval for outputting report information of training
+        """
+
         total_rewards = []
 
         for epoch in range(1, num_epochs + 1):
