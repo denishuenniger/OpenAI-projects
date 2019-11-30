@@ -249,7 +249,7 @@ if __name__ == "__main__":
     PLAY = True
     EPISODES_TRAIN = 10000
     EPISODES_PLAY = 15
-    REPORT_INTERVAL = 1
+    REPORT_INTERVAL = 10
 
     # Hyperparameters
     ALPHA = 0.1
