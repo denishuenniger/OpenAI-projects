@@ -12,7 +12,7 @@ from wrapper import *
  
 class Agent:
     """
-    Class representing a learning agent acting on an environment.
+    Class representing a learning agent acting in an environment.
     """
     
     def __init__(self,
@@ -29,13 +29,14 @@ class Agent:
             - sync_model=1000 : Interval for synchronizing model and target model
             - save_model=10 : Interval for saving the model
 
-            - buffer_size : Replay buffer size of the model
-            - batch_size : Batch size of the model
+            - buffer_size : Replay buffer size of the DQN model
+            - batch_size : Batch size of the DQN model
             - alpha : Learning rate for Q-Learning
-            - epsilon : Parameter for the Epsilon-Greedy algorithm
-            - epsilon_min : Minimal value for epsilon
+            - gamma : Discount factor for Q-Learning
+            - epsilon : Threshold for taking a random action
+            - epsilon_min : Minimal value allowed for epsilon
             - epsilon_decay : Decay rate for epsilon
-            - lr : Learning rate for the DQN
+            - lr : Learning rate for the DQN model
         """
 
         # Environment variables
@@ -67,8 +68,8 @@ class Agent:
 
         # File paths
         dirname = os.path.dirname(__file__)
-        self.path_model = os.path.join(dirname, "models/dqn.h5")
-        self.path_plot = os.path.join(dirname, "plots/dqn.png")
+        self.path_model = os.path.join(dirname, "dqn.h5")
+        self.path_plot = os.path.join(dirname, "dqn.png")
         
         # Load model, if it already exists
         try:
@@ -94,7 +95,6 @@ class Agent:
     def get_action(self, state):
         """
         Returns an action for a given state, based on the current policy.
-
             - state : Current state of the agent
         """
 
@@ -109,7 +109,6 @@ class Agent:
     def train(self, num_episodes, report_interval):
         """
         Trains the DQN model for a given number of episodes. Outputting report information is controlled by a given time interval.
-
             - num_episodes : Number of episodes to train
             - report_interval : Interval for outputting report information of training
         """
@@ -199,7 +198,6 @@ class Agent:
     def play(self, num_episodes):
         """
         Renders the trained agent for a given number of episodes.
-
             - num_episodes : Number of episodes to render
         """
 
@@ -226,7 +224,6 @@ class Agent:
     def plot_rewards(self, total_rewards):
         """
         Plots the rewards the agent has acquired during training.
-
             - total_rewards : Rewards the agent has gained per episode
         """
 

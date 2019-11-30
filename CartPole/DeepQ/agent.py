@@ -11,9 +11,30 @@ from buffer import ReplayBuffer
 
 
 class Agent:
-
+    """
+    Class representing a learning agent acting in an environment.
+    """
+    
     def __init__(self, buffer_size, batch_size, alpha, gamma, epsilon, epsilon_min, epsilon_decay, lr,
         game="CartPole-v1", mean_bound=5, reward_bound=495.0, sync_model=1000, save_model=10):
+        """
+        Constructor of the agent class.
+            - game="CartPole-v1" : Name of the game environment
+            - mean_bound=5 : Number of last acquired rewards considered for mean reward
+            - reward_bound=495.0 : Reward acquired for completing an episode properly
+            - sync_model=1000 : Interval for synchronizing model and target model
+            - save_model=10 : Interval for saving model
+
+            - buffer_size : Replay buffer size of the DQN model
+            - batch_size : Batch size of the DQN model
+            - alpha : Learning rate for Q-Learning
+            - gamma : Discount factor for Q-Learning
+            - epsilon : Threshold for taking a random action
+            - epsilon_min : Minimal value allowed for epsilon
+            - epsilon_decay : Decay rate for epsilon
+            - lr : Learning rate for the DQN model
+        """
+        
         # Environment variables
         self.game = game
         self.env = gym.make(self.game)
@@ -54,6 +75,10 @@ class Agent:
 
 
     def reduce_epsilon(self):
+        """
+        Reduces the parameter epsilon up to a given minimal value where the speed of decay is controlled by some given parameter.
+        """
+
         epsilon = self.epsilon * self.epsilon_decay
 
         if epsilon >= self.epsilon_min:
@@ -63,6 +88,11 @@ class Agent:
 
 
     def get_action(self, state):
+        """
+        Returns an action for a given state, based on the current policy.
+            - state : Current state of the agent
+        """
+
         if np.random.random() < self.epsilon:
             action = self.env.action_space.sample()
         else:
@@ -70,28 +100,14 @@ class Agent:
 
         return action
 
-
-    def replay(self):
-        sample_size, states, actions, rewards, next_states, dones = self.memory.sample()
-
-        q_values = self.model.predict(states)
-        next_q_values = self.target_model.predict(next_states)
-
-        for i in range(sample_size):
-            action = actions[i]
-            done = dones[i]
-
-            if done:
-                q_target = rewards[i]
-            else:
-                q_target = rewards[i] + self.gamma * np.max(next_q_values[i])
-
-            q_values[i][action] = (1 - self.alpha) * q_values[i][action] + self.alpha * q_target
-
-        self.model.fit(states, q_values)
-
     
     def train(self, num_episodes, report_interval):
+        """
+        Trains the DQN model for a given number of episodes. Outputting report information is controlled by a given time interval.
+            - num_episodes : Number of episodes to train
+            - report_interval : Interval for outputting report information of training
+        """
+
         step = 0
         total_rewards = []
 
@@ -147,8 +163,37 @@ class Agent:
 
         self.model.save(self.path_model)
 
+    
+    def replay(self):
+        """
+        Samples training data from the replay buffer and fits the DQN model.
+        """
+
+        sample_size, states, actions, rewards, next_states, dones = self.memory.sample()
+
+        q_values = self.model.predict(states)
+        next_q_values = self.target_model.predict(next_states)
+
+        for i in range(sample_size):
+            action = actions[i]
+            done = dones[i]
+
+            if done:
+                q_target = rewards[i]
+            else:
+                q_target = rewards[i] + self.gamma * np.max(next_q_values[i])
+
+            q_values[i][action] = (1 - self.alpha) * q_values[i][action] + self.alpha * q_target
+
+        self.model.fit(states, q_values)
+
 
     def play(self, num_episodes):
+        """
+        Renders the trained agent for a given number of episodes.
+            - num_episodes : Number of episodes to render
+        """
+
         self.epsilon = self.epsilon_min
 
         for episode in range(1, num_episodes + 1):
@@ -173,6 +218,11 @@ class Agent:
 
 
     def plot_rewards(self, total_rewards):
+        """
+        Plots the rewards the agent has acquired during training.
+            - total_rewards : Rewards the agent has gained per episode
+        """
+
         x = range(len(total_rewards))
         y = total_rewards
 
@@ -186,9 +236,9 @@ class Agent:
         plt.savefig(self.path_plot)
 
 
-# Main program
 if __name__ == "__main__":
 
+    # Choose whether to play or to train
     PLAY = True
     REPORT_INTERVAL = 100
     EPISODES_TRAIN = 1000
