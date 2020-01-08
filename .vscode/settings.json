@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "/home/denis/anaconda3/envs/machine-learning/bin/python",
+    "python.pythonPath": "C:\\Users\\denis\\.conda\\envs\\machine-learning\\python.exe",
     "files.associations": {
         "exception": "cpp",
         "string": "cpp",
@@ -47,5 +47,6 @@
         "stdexcept": "cpp",
         "streambuf": "cpp",
         "typeinfo": "cpp"
-    }
+    },
+    "git.ignoreLimitWarning": true
 }

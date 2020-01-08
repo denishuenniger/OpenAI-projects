@@ -141,7 +141,7 @@ class Agent:
 # Main program
 if __name__ == "__main__":
 
-    PLAY = False
+    PLAY = True
     REPORT_INTERVAL = 100
     EPISODES_TRAIN = 1000
     EPISODES_PLAY = 5

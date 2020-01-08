@@ -243,7 +243,7 @@ class Agent:
 if __name__ == "__main__":
 
     # Choose whether to play or to train
-    PLAY = True
+    PLAY = False
     EPISODES_TRAIN = 10000
     EPISODES_PLAY = 15
     REPORT_INTERVAL = 10
