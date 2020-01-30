@@ -9,15 +9,15 @@ from model import *
 from buffer import *
 from wrapper import *
 
- 
+
 class Agent:
     """
     Class representing a learning agent acting in an environment.
     """
-    
+
     def __init__(self,
         buffer_size, batch_size, alpha, gamma, epsilon, epsilon_min, epsilon_decay, lr,
-        game="PongDeterministic-v4", num_actions=4, img_shape=(84,84,4), no_ops_steps=30, mean_bound=5, reward_bound=15.0, sync_model=1000, save_model=10):  
+        game="PongDeterministic-v4", num_actions=4, img_shape=(84,84,4), no_ops_steps=30, mean_bound=5, reward_bound=15.0, sync_model=1000, save_model=10):
         """
         Constructor of the agent class.
             - game="PongDeterministic-v4" : Name of the game environment
@@ -70,7 +70,7 @@ class Agent:
         dirname = os.path.dirname(__file__)
         self.path_model = os.path.join(dirname, "dqn.h5")
         self.path_plot = os.path.join(dirname, "dqn.png")
-        
+
         # Load model, if it already exists
         try:
             self.model.load(self.path_model)
@@ -78,7 +78,7 @@ class Agent:
         except:
             print("Model does not exist! Create new model...")
 
-    
+
     def reduce_epsilon(self):
         """
         Reduces the parameter epsilon up to a given minimal value where the speed of decay is controlled by some given parameter.
@@ -90,8 +90,8 @@ class Agent:
             self.epsilon = epsilon
         else:
             self.epsilon = self.epsilon_min
-    
-    
+
+
     def get_action(self, state):
         """
         Returns an action for a given state, based on the current policy.
@@ -102,7 +102,7 @@ class Agent:
             action = np.random.randint(self.num_actions)
         else:
             action = np.argmax(self.model.predict(state))
-        
+
         return action
 
 
@@ -130,7 +130,7 @@ class Agent:
 
             while True:
                 step += 1
-                
+
                 action = self.get_action(state)
                 next_state, reward, done, _ = self.env.step(action)
                 total_reward += reward
@@ -150,7 +150,7 @@ class Agent:
                 if done:
                     total_rewards.append(total_reward)
                     mean_reward = np.mean(total_rewards[-5:])
-                    
+
                     if episode % report_interval == 0:
                         print(
                             f"Episode: {episode}/{num_episodes}"
@@ -204,7 +204,7 @@ class Agent:
         for episode in range(1, num_episodes + 1):
             state = self.env.reset()
             state = np.concatenate((state, state, state, state), axis=3)
-            
+
             while True:
                 self.env.render()
                 action = self.get_action(state)
@@ -217,7 +217,7 @@ class Agent:
                     print(
                         f"Episode: {episode}/{num_episodes}"
                         f"\tReward: {reward}")
-                    
+
                     break
 
 
