@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "C:\\Users\\denis\\.conda\\envs\\machine-learning\\python.exe",
+    "python.pythonPath": "C:\\Users\\denis\\anaconda3\\python.exe",
     "files.associations": {
         "exception": "cpp",
         "string": "cpp",

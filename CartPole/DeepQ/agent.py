@@ -14,9 +14,9 @@ class Agent:
     """
     Class representing a learning agent acting in an environment.
     """
-    
+
     def __init__(self, buffer_size, batch_size, alpha, gamma, epsilon, epsilon_min, epsilon_decay, lr,
-        game="CartPole-v1", mean_bound=5, reward_bound=495.0, sync_model=1000, save_model=10):
+                 game="CartPole-v1", mean_bound=5, reward_bound=495.0, sync_model=1000, save_model=10):
         """
         Constructor of the agent class.
             - game="CartPole-v1" : Name of the game environment
@@ -34,7 +34,7 @@ class Agent:
             - epsilon_decay : Decay rate for epsilon
             - lr : Learning rate for the DQN model
         """
-        
+
         # Environment variables
         self.game = game
         self.env = gym.make(self.game)
@@ -52,8 +52,8 @@ class Agent:
         self.epsilon_decay = epsilon_decay
         self.mean_bound = mean_bound
         self.reward_bound = reward_bound
-        
-        #DQN variables
+
+        # DQN variables
         self.lr = lr
         self.model = DQN(self.num_states, self.num_actions, self.lr)
         self.target_model = DQN(self.num_states, self.num_actions, self.lr)
@@ -73,7 +73,6 @@ class Agent:
         except:
             print("Model does not exist! Create new model...")
 
-
     def reduce_epsilon(self):
         """
         Reduces the parameter epsilon up to a given minimal value where the speed of decay is controlled by some given parameter.
@@ -85,7 +84,6 @@ class Agent:
             self.epsilon = epsilon
         else:
             self.epsilon = self.epsilon_min
-
 
     def get_action(self, state):
         """
@@ -100,7 +98,6 @@ class Agent:
 
         return action
 
-    
     def train(self, num_episodes, report_interval):
         """
         Trains the DQN model for a given number of episodes. Outputting report information is controlled by a given time interval.
@@ -114,20 +111,21 @@ class Agent:
         for episode in range(1, num_episodes + 1):
             if episode % self.save_model == 0:
                 self.model.save(self.path_model)
-            
+
             state = self.env.reset()
             state = state.reshape((1, self.num_states))
             total_reward = 0.0
 
             while True:
                 step += 1
-                
+
                 action = self.get_action(state)
                 next_state, reward, done, _ = self.env.step(action)
                 next_state = next_state.reshape((1, self.num_states))
 
                 # Penalize agent if pole could not be balanced until end of episode
-                if done and reward < 499.0: reward = -100.0
+                if done and reward < 499.0:
+                    reward = -100.0
 
                 self.buffer.remember(state, action, reward, next_state, done)
                 self.replay()
@@ -163,7 +161,6 @@ class Agent:
 
         self.model.save(self.path_model)
 
-    
     def replay(self):
         """
         Samples training data from the replay buffer and fits the DQN model.
@@ -183,10 +180,10 @@ class Agent:
             else:
                 q_target = rewards[i] + self.gamma * np.max(next_q_values[i])
 
-            q_values[i][action] = (1 - self.alpha) * q_values[i][action] + self.alpha * q_target
+            q_values[i][action] = (1 - self.alpha) * \
+                q_values[i][action] + self.alpha * q_target
 
         self.model.fit(states, q_values)
-
 
     def play(self, num_episodes):
         """
@@ -216,7 +213,6 @@ class Agent:
 
                     break
 
-
     def plot_rewards(self, total_rewards):
         """
         Plots the rewards the agent has acquired during training.
@@ -227,44 +223,10 @@ class Agent:
         y = total_rewards
 
         slope, intercept, _, _, _ = linregress(x, y)
-        
+
         plt.plot(x, y, linewidth=0.8)
         plt.plot(x, slope * x + intercept, color="red", linestyle="-.")
         plt.xlabel("Episode")
         plt.ylabel("Reward")
         plt.title("DQN-Learning")
         plt.savefig(self.path_plot)
-
-
-if __name__ == "__main__":
-
-    # Choose whether to play or to train
-    PLAY = True
-    REPORT_INTERVAL = 100
-    EPISODES_TRAIN = 1000
-    EPISODES_PLAY = 5
-
-    # Hyperparameters
-    BUFFER_SIZE = 1000000
-    BATCH_SIZE = 128
-    ALPHA = 0.2
-    GAMMA = 0.95
-    EPSILON = 0.1
-    EPSILON_MIN = 0.01
-    EPSILON_DECAY = 0.98
-    LEARNING_RATE = 0.001
-
-    agent = Agent(
-        buffer_size=BUFFER_SIZE,
-        batch_size=BATCH_SIZE,
-        alpha=ALPHA,
-        gamma=GAMMA,
-        epsilon=EPSILON,
-        epsilon_min=EPSILON_MIN,
-        epsilon_decay=EPSILON_DECAY,
-        lr=LEARNING_RATE)
-    
-    if not PLAY:
-        agent.train(num_episodes=EPISODES_TRAIN, report_interval=REPORT_INTERVAL)
-    else:
-        agent.play(num_episodes=EPISODES_PLAY)
