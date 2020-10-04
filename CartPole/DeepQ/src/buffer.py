@@ -1,3 +1,5 @@
+import numpy as np
+import random
 from collections import deque
 
 
@@ -17,14 +19,12 @@ class ReplayBuffer:
         self.batch_size = batch_size
         self.buffer = deque(maxlen=self.buffer_size)
 
-
     def __len__(self):
         """
         Returns the length of the replay buffer.
         """
 
         return len(self.buffer)
-
 
     def remember(self, state, action, reward, next_state, done):
         """
@@ -38,12 +38,11 @@ class ReplayBuffer:
 
         self.buffer.append((state, action, reward, next_state, done))
 
-
     def sample(self):
         """
         Returns a sample of training data of the replay buffer.
         """
-        
+
         sample_size = min(self.__len__(), self.batch_size)
         batch = random.sample(self.buffer, sample_size)
         states, actions, rewards, next_states, dones = zip(*batch)
