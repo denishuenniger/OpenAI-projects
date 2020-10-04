@@ -1,5 +1,4 @@
 from agent import *
-from model import *
 
 if __name__ == "__main__":
 
