@@ -230,6 +230,7 @@ class Agent:
         plt.plot(x, slope * x + intercept, color="red", linestyle="-.")
         plt.xlabel("Episode")
         plt.ylabel("Reward")
+        plt.grid(True)
         plt.title("DQN-Learning")
         plt.savefig(self.path_plot)
         plt.close()
