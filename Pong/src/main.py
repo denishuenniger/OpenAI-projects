@@ -3,7 +3,7 @@ from agent import *
 if __name__ == "__main__":
 
     # Choose whether to play or to train
-    PLAY = False
+    PLAY = True
     EPISODES_TRAIN = 10000
     EPISODES_PLAY = 15
     REPORT_INTERVAL = 10
