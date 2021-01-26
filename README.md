@@ -1,5 +1,5 @@
 # OpenAI Projects
-Python package for getting started with **Reinforcement Learning** based on the framework **OpenAI**.
+Python package for getting started with Reinforcement Learning based on the framework **OpenAI**
 
 # Wiki
 
