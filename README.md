@@ -3,4 +3,4 @@ Python package for getting started with **Reinforcement Learning** based on the 
 
 # Wiki
 
-[OpenAI][(https://openai.com/blog/universe/)
+[OpenAI](https://openai.com/blog/universe/)
